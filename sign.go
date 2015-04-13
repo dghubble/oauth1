@@ -1,7 +1,6 @@
 package oauth1
 
 import (
-	"bytes"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha1"
@@ -15,17 +14,15 @@ import (
 )
 
 const (
-	AUTHORIZATION_HEADER = "Authorization"
-	AUTHORIZATION_PREFIX = "OAuth " // trailing space is intentional
-	// OAuth1 parameter names
-	OAUTH_CONSUMER_KEY     = "oauth_consumer_key"
-	OAUTH_NONCE            = "oauth_nonce"
-	OAUTH_SIGNATURE        = "oauth_signature"
-	OAUTH_SIGNATURE_METHOD = "oauth_signature_method"
-	OAUTH_TIMESTAMP        = "oauth_timestamp"
-	OAUTH_TOKEN            = "oauth_token"
-	OAUTH_VERSION          = "oauth_version"
-	// default values
+	AUTHORIZATION_HEADER     = "Authorization"
+	AUTHORIZATION_PREFIX     = "OAuth " // trailing space is intentional
+	OAUTH_CONSUMER_KEY       = "oauth_consumer_key"
+	OAUTH_NONCE              = "oauth_nonce"
+	OAUTH_SIGNATURE          = "oauth_signature"
+	OAUTH_SIGNATURE_METHOD   = "oauth_signature_method"
+	OAUTH_TIMESTAMP          = "oauth_timestamp"
+	OAUTH_TOKEN              = "oauth_token"
+	OAUTH_VERSION            = "oauth_version"
 	DEFAULT_SIGNATURE_METHOD = "HMAC-SHA1"
 	DEFAULT_VERSION          = "1.0"
 )
@@ -154,34 +151,4 @@ func nonce() string {
 // Returns the epoch
 func epoch() int64 {
 	return time.Now().Unix()
-}
-
-// PercentEncode percent encodes a string according to RFC 3986 2.1.
-func PercentEncode(input string) string {
-	var buf bytes.Buffer
-	for _, b := range []byte(input) {
-		// if in unreserved set
-		if shouldEscape(b) {
-			buf.Write([]byte(fmt.Sprintf("%%%02X", b)))
-		} else {
-			// do not escape, write byte as-is
-			buf.WriteByte(b)
-		}
-	}
-	return buf.String()
-}
-
-// shouldEscape returns false if the byte is an unreserved character that
-// should not be escaped and true otherwise, according to RFC 3986 2.1.
-func shouldEscape(c byte) bool {
-	// RFC3986 2.3 unreserved characters
-	if 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z' || '0' <= c && c <= '9' {
-		return false
-	}
-	switch c {
-	case '-', '.', '_', '~':
-		return false
-	}
-	// all other bytes must be escaped
-	return true
 }

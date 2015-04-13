@@ -1,7 +1,7 @@
 
 # OAuth1 [![Build Status](https://travis-ci.org/dghubble/oauth1.png)](https://travis-ci.org/dghubble/oauth1) [![GoDoc](http://godoc.org/github.com/dghubble/oauth1?status.png)](http://godoc.org/github.com/dghubble/oauth1)
 
-OAauth1 is a (in-progress!) Go client implementation of the OAuth1 spec. It supports authorizing HTTP requests. 
+OAauth1 is a Go client implementation of the OAuth1 spec. It supports authorizing HTTP requests. 
 
 The OAuth1 package takes design cues from the [golang.org/x/oauth2](https://godoc.org/golang.org/x/oauth2), providing an http.Client which handles signing requests and authorization via a custom Transport.
 
