@@ -1,7 +1,7 @@
 package oauth1
 
-// Token stores access/token credentials which allow a user to access resources
-// from an OAuth1 provider backend.
+// Token is an AccessToken (token credential) which allows a consumer (client)
+// to access resources from an OAuth1 provider server.
 type Token struct {
 	Token       string
 	TokenSecret string

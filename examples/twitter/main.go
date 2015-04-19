@@ -8,12 +8,13 @@ import (
 	"os"
 )
 
+// Twitter user-auth requests with an Access Token (token credential)
 func main() {
 	// read credentials from environment variables
 	consumerKey := os.Getenv("TWITTER_CONSUMER_KEY")
 	consumerSecret := os.Getenv("TWITTER_CONSUMER_SECRET")
-	accessToken := os.Getenv("TWITTER_TOKEN")
-	accessTokenSecret := os.Getenv("TWITTER_TOKEN_SECRET")
+	accessToken := os.Getenv("TWITTER_ACCESS_TOKEN")
+	accessTokenSecret := os.Getenv("TWITTER_ACCESS_TOKEN_SECRET")
 	if consumerKey == "" || consumerSecret == "" || accessToken == "" || accessTokenSecret == "" {
 		panic("Missing required environment variable")
 	}

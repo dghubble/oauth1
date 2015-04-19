@@ -23,6 +23,8 @@ const (
 	OAUTH_TIMESTAMP          = "oauth_timestamp"
 	OAUTH_TOKEN              = "oauth_token"
 	OAUTH_VERSION            = "oauth_version"
+	OAUTH_CALLBACK           = "oauth_callback"
+	OAUTH_VERIFIER           = "oauth_verifier"
 	DEFAULT_SIGNATURE_METHOD = "HMAC-SHA1"
 	DEFAULT_VERSION          = "1.0"
 )
@@ -32,25 +34,52 @@ type Signer struct {
 	config *Config
 }
 
-// Sign sets an authorization header on the request with the oauth
-// parameters including the oauth_signature digest.
-func (s *Signer) Sign(req *http.Request, token *Token) {
-	oauthParams := s.oauthParams(req, token)
-	req.Header.Set(AUTHORIZATION_HEADER, authorizationHeader(oauthParams))
+// SetRequestTokenAuthHeader adds the OAuth1 header for the request token
+// request (temporary credential) according to RFC 5849 2.1.
+func (s *Signer) SetRequestTokenAuthHeader(req *http.Request) {
+	oauthParams := basicOAuthParams(s.config.ConsumerKey)
+	oauthParams[OAUTH_CALLBACK] = s.config.CallbackURL
+
+	signatureBase := signatureBase(req, oauthParams)
+	signature := signature(s.config.ConsumerSecret, "", signatureBase)
+	oauthParams[OAUTH_SIGNATURE] = signature
+	setAuthorizationHeader(req, oauthParams)
 }
 
-// oauthParams returns a map of the OAuth1 protocol parameters including the
-// "oauth_signature" parameter with signature value.
-func (s *Signer) oauthParams(req *http.Request, token *Token) map[string]string {
-	oauthParams := basicOAuthParams(s.config.ConsumerKey, token.Token)
+// SetAccessTokenAuthHeader sets the OAuth1 header for the access token request
+// (token credential) according to RFC 5849 2.3.
+func (s *Signer) SetAccessTokenAuthHeader(req *http.Request, requestToken *RequestToken, verifier string) {
+	oauthParams := basicOAuthParams(s.config.ConsumerKey)
+	oauthParams[OAUTH_TOKEN] = requestToken.Token
+	oauthParams[OAUTH_VERIFIER] = verifier
+
 	signatureBase := signatureBase(req, oauthParams)
-	signature := signature(s.config.ConsumerSecret, token.TokenSecret, signatureBase)
+	signature := signature(s.config.ConsumerSecret, requestToken.TokenSecret, signatureBase)
 	oauthParams[OAUTH_SIGNATURE] = signature
-	return oauthParams
+	setAuthorizationHeader(req, oauthParams)
+}
+
+// SetRequestAuthHeader sets the OAuth1 header for making authenticated
+// requests with an AccessToken (token credential) according to RFC 5849 3.1.
+func (s *Signer) SetRequestAuthHeader(req *http.Request, accessToken *Token) {
+	oauthParams := basicOAuthParams(s.config.ConsumerKey)
+	oauthParams[OAUTH_TOKEN] = accessToken.Token
+
+	signatureBase := signatureBase(req, oauthParams)
+	signature := signature(s.config.ConsumerSecret, accessToken.TokenSecret, signatureBase)
+	oauthParams[OAUTH_SIGNATURE] = signature
+	setAuthorizationHeader(req, oauthParams)
+}
+
+// setAuthorizationHeader formats the OAuth1 protocol parameters into a header
+// and sets the header on the Request.
+func setAuthorizationHeader(req *http.Request, oauthParams map[string]string) {
+	authHeader := authorizationHeader(oauthParams)
+	req.Header.Set(AUTHORIZATION_HEADER, authHeader)
 }
 
 // authorizationHeader combines the OAuth1 protocol parameters into an
-// Authorization header according to RFC5849 3.5.1.
+// authorization header according to RFC 5849 3.5.1 and returns it.
 // The oauthParams should include the "oauth_signature" key/value pair.
 // Does not mutate the oauthParams.
 func authorizationHeader(oauthParams map[string]string) string {
@@ -69,15 +98,14 @@ func authorizationHeader(oauthParams map[string]string) string {
 	return AUTHORIZATION_PREFIX + strings.Join(pairs, ", ")
 }
 
-// basicOAuthParams returns a map of the OAuth1 protocol parameters excluding
-// the "oauth_signature" parameter.
-func basicOAuthParams(consumerKey, token string) map[string]string {
+// basicOAuthParams returns a map of the common OAuth1 protocol parameters,
+// excluding the oauth_signature parameter.
+func basicOAuthParams(consumerKey string) map[string]string {
 	return map[string]string{
 		OAUTH_CONSUMER_KEY:     consumerKey,
-		OAUTH_NONCE:            nonce(),
 		OAUTH_SIGNATURE_METHOD: DEFAULT_SIGNATURE_METHOD,
 		OAUTH_TIMESTAMP:        strconv.FormatInt(epoch(), 10),
-		OAUTH_TOKEN:            token,
+		OAUTH_NONCE:            nonce(),
 		OAUTH_VERSION:          DEFAULT_VERSION,
 	}
 }
