@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	authorizationHeaderKey    = "Authorization"
+	authorizationHeaderParam  = "Authorization"
 	authorizationPrefix       = "OAuth " // trailing space is intentional
 	oauthConsumerKeyParam     = "oauth_consumer_key"
 	oauthNonceParam           = "oauth_nonce"
@@ -59,7 +59,7 @@ func (s *Signer) SetRequestTokenAuthHeader(req *http.Request) error {
 func (s *Signer) SetAccessTokenAuthHeader(req *http.Request, requestToken *RequestToken, verifier string) error {
 	oauthParams := basicOAuthParams(s.config.ConsumerKey)
 	oauthParams[oauthTokenParam] = requestToken.Token
-	oauthParams[oauthVersionParam] = verifier
+	oauthParams[oauthVerifierParam] = verifier
 	signatureBase, err := signatureBase(req, oauthParams)
 	if err != nil {
 		return err
@@ -101,7 +101,7 @@ func basicOAuthParams(consumerKey string) map[string]string {
 // and sets the header on the Request.
 func setAuthorizationHeader(req *http.Request, oauthParams map[string]string) {
 	authHeader := getAuthHeader(oauthParams)
-	req.Header.Set(authorizationHeaderKey, authHeader)
+	req.Header.Set(authorizationHeaderParam, authHeader)
 }
 
 // getAuthHeader combines the OAuth1 protocol parameters into an authorization
