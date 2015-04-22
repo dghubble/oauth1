@@ -33,7 +33,6 @@ func main() {
 
 	// Nicer: Pass OAuth1 client to go-twitter API
 	api := twitter.NewClient(httpClient)
-	params := &twitter.UserShowParams{ScreenName: "dghubble"}
-	user, _, _ := api.Users.Show(params)
-	fmt.Printf("User from go-twitter API:\n%+v\n", user)
+	tweets, _, _ := api.Timelines.HomeTimeline(nil)
+	fmt.Printf("User's HOME TIMELINE:\n%+v\n", tweets)
 }

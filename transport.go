@@ -13,8 +13,14 @@ type Transport struct {
 }
 
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	accessToken, _ := t.source.Token()
-	t.signer.SetRequestAuthHeader(req, accessToken)
+	accessToken, err := t.source.Token()
+	if err != nil {
+		return nil, err
+	}
+	err = t.signer.SetRequestAuthHeader(req, accessToken)
+	if err != nil {
+		return nil, err
+	}
 	// TODO: request mutation violates http.RoundTripper recommendations
 	res, err := http.DefaultTransport.RoundTrip(req)
 	return res, err
