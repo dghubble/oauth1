@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	OAUTH_TOKEN_SECRET       = "oauth_token_secret"
-	OAUTH_CALLBACK_CONFIRMED = "oauth_callback_confirmed"
+	oauthTokenSecretParam       = "oauth_token_secret"
+	oauthCallbackConfirmedParam = "oauth_callback_confirmed"
 )
 
 // Config represents an OAuth1 consumer's (client's) credentials, callback URL,
@@ -25,6 +25,7 @@ type Config struct {
 	Endpoint Endpoint
 }
 
+// NewConfig returns a new Config with the given consumer key and secret.
 func NewConfig(consumerKey, consumerSecret string) *Config {
 	return &Config{
 		ConsumerKey:    consumerKey,
@@ -37,7 +38,7 @@ func (c *Config) Client(t *Token) *http.Client {
 	return NewClient(c, t)
 }
 
-// Returns a new http Client which signs requests via OAuth1.
+// NewClient returns a new http Client which signs requests via OAuth1.
 func NewClient(config *Config, token *Token) *http.Client {
 	transport := &Transport{
 		source: &ReuseTokenSource{token, nil},
@@ -82,11 +83,11 @@ func (c *Config) GetRequestToken() (*RequestToken, error) {
 	if err != nil {
 		return nil, err
 	}
-	if values.Get(OAUTH_CALLBACK_CONFIRMED) != "true" {
+	if values.Get(oauthCallbackConfirmedParam) != "true" {
 		return nil, errors.New("oauth_callback_confirmed was not true")
 	}
-	token := values.Get(OAUTH_TOKEN)
-	tokenSecret := values.Get(OAUTH_TOKEN_SECRET)
+	token := values.Get(oauthTokenParam)
+	tokenSecret := values.Get(oauthTokenSecretParam)
 	if token == "" || tokenSecret == "" {
 		return nil, errors.New("GetRequestToken response missing oauth token or secret")
 	}
@@ -104,7 +105,7 @@ func (c *Config) AuthorizationURL(rt *RequestToken) (*url.URL, error) {
 		return nil, err
 	}
 	values := authorizationURL.Query()
-	values.Add(OAUTH_TOKEN, rt.Token)
+	values.Add(oauthTokenParam, rt.Token)
 	authorizationURL.RawQuery = values.Encode()
 	return authorizationURL, nil
 }
@@ -121,8 +122,8 @@ func (c *Config) HandleAuthorizationCallback(req *http.Request) (tokenKey, verif
 	if err != nil {
 		return "", "", err
 	}
-	tokenKey = req.Form.Get(OAUTH_TOKEN)
-	verifier = req.Form.Get(OAUTH_VERIFIER)
+	tokenKey = req.Form.Get(oauthTokenParam)
+	verifier = req.Form.Get(oauthVerifierParam)
 	if tokenKey == "" || verifier == "" {
 		return "", "", errors.New("callback did not receive an oauth_token or oauth_verifier")
 	}
@@ -157,8 +158,8 @@ func (c *Config) GetAccessToken(requestToken *RequestToken, verifier string) (*T
 	if err != nil {
 		return nil, err
 	}
-	token := values.Get(OAUTH_TOKEN)
-	tokenSecret := values.Get(OAUTH_TOKEN_SECRET)
+	token := values.Get(oauthTokenParam)
+	tokenSecret := values.Get(oauthTokenSecretParam)
 	if token == "" || tokenSecret == "" {
 		return nil, errors.New("GetAccessToken response missing oauth token or secret")
 	}

@@ -17,24 +17,24 @@ import (
 )
 
 const (
-	AUTHORIZATION_HEADER     = "Authorization"
-	AUTHORIZATION_PREFIX     = "OAuth " // trailing space is intentional
-	OAUTH_CONSUMER_KEY       = "oauth_consumer_key"
-	OAUTH_NONCE              = "oauth_nonce"
-	OAUTH_SIGNATURE          = "oauth_signature"
-	OAUTH_SIGNATURE_METHOD   = "oauth_signature_method"
-	OAUTH_TIMESTAMP          = "oauth_timestamp"
-	OAUTH_TOKEN              = "oauth_token"
-	OAUTH_VERSION            = "oauth_version"
-	OAUTH_CALLBACK           = "oauth_callback"
-	OAUTH_VERIFIER           = "oauth_verifier"
-	DEFAULT_SIGNATURE_METHOD = "HMAC-SHA1"
-	DEFAULT_VERSION          = "1.0"
-	contentType              = "Content-Type"
-	formContentType          = "application/x-www-form-urlencoded"
+	authorizationHeaderKey    = "Authorization"
+	authorizationPrefix       = "OAuth " // trailing space is intentional
+	oauthConsumerKeyParam     = "oauth_consumer_key"
+	oauthNonceParam           = "oauth_nonce"
+	oauthSignatureParam       = "oauth_signature"
+	oauthSignatureMethodParam = "oauth_signature_method"
+	oauthTimestampParam       = "oauth_timestamp"
+	oauthTokenParam           = "oauth_token"
+	oauthVersionParam         = "oauth_version"
+	oauthCallbackParam        = "oauth_callback"
+	oauthVerifierParam        = "oauth_verifier"
+	defaultSignatureMethod    = "HMAC-SHA1"
+	defaultOauthVersion       = "1.0"
+	contentType               = "Content-Type"
+	formContentType           = "application/x-www-form-urlencoded"
 )
 
-// Handles signing requests and setting authorization header
+// Signer handles signing requests and setting the authorization header.
 type Signer struct {
 	config *Config
 }
@@ -43,13 +43,13 @@ type Signer struct {
 // request (temporary credential) according to RFC 5849 2.1.
 func (s *Signer) SetRequestTokenAuthHeader(req *http.Request) error {
 	oauthParams := basicOAuthParams(s.config.ConsumerKey)
-	oauthParams[OAUTH_CALLBACK] = s.config.CallbackURL
+	oauthParams[oauthCallbackParam] = s.config.CallbackURL
 	signatureBase, err := signatureBase(req, oauthParams)
 	if err != nil {
 		return err
 	}
 	signature := signature(s.config.ConsumerSecret, "", signatureBase)
-	oauthParams[OAUTH_SIGNATURE] = signature
+	oauthParams[oauthSignatureParam] = signature
 	setAuthorizationHeader(req, oauthParams)
 	return nil
 }
@@ -58,14 +58,14 @@ func (s *Signer) SetRequestTokenAuthHeader(req *http.Request) error {
 // (token credential) according to RFC 5849 2.3.
 func (s *Signer) SetAccessTokenAuthHeader(req *http.Request, requestToken *RequestToken, verifier string) error {
 	oauthParams := basicOAuthParams(s.config.ConsumerKey)
-	oauthParams[OAUTH_TOKEN] = requestToken.Token
-	oauthParams[OAUTH_VERIFIER] = verifier
+	oauthParams[oauthTokenParam] = requestToken.Token
+	oauthParams[oauthVersionParam] = verifier
 	signatureBase, err := signatureBase(req, oauthParams)
 	if err != nil {
 		return err
 	}
 	signature := signature(s.config.ConsumerSecret, requestToken.TokenSecret, signatureBase)
-	oauthParams[OAUTH_SIGNATURE] = signature
+	oauthParams[oauthSignatureParam] = signature
 	setAuthorizationHeader(req, oauthParams)
 	return nil
 }
@@ -74,13 +74,13 @@ func (s *Signer) SetAccessTokenAuthHeader(req *http.Request, requestToken *Reque
 // requests with an AccessToken (token credential) according to RFC 5849 3.1.
 func (s *Signer) SetRequestAuthHeader(req *http.Request, accessToken *Token) error {
 	oauthParams := basicOAuthParams(s.config.ConsumerKey)
-	oauthParams[OAUTH_TOKEN] = accessToken.Token
+	oauthParams[oauthTokenParam] = accessToken.Token
 	signatureBase, err := signatureBase(req, oauthParams)
 	if err != nil {
 		return err
 	}
 	signature := signature(s.config.ConsumerSecret, accessToken.TokenSecret, signatureBase)
-	oauthParams[OAUTH_SIGNATURE] = signature
+	oauthParams[oauthSignatureParam] = signature
 	setAuthorizationHeader(req, oauthParams)
 	return nil
 }
@@ -89,26 +89,26 @@ func (s *Signer) SetRequestAuthHeader(req *http.Request, accessToken *Token) err
 // excluding the oauth_signature parameter.
 func basicOAuthParams(consumerKey string) map[string]string {
 	return map[string]string{
-		OAUTH_CONSUMER_KEY:     consumerKey,
-		OAUTH_SIGNATURE_METHOD: DEFAULT_SIGNATURE_METHOD,
-		OAUTH_TIMESTAMP:        strconv.FormatInt(epoch(), 10),
-		OAUTH_NONCE:            nonce(),
-		OAUTH_VERSION:          DEFAULT_VERSION,
+		oauthConsumerKeyParam:     consumerKey,
+		oauthSignatureMethodParam: defaultSignatureMethod,
+		oauthTimestampParam:       strconv.FormatInt(epoch(), 10),
+		oauthNonceParam:           nonce(),
+		oauthVersionParam:         defaultOauthVersion,
 	}
 }
 
 // setAuthorizationHeader formats the OAuth1 protocol parameters into a header
 // and sets the header on the Request.
 func setAuthorizationHeader(req *http.Request, oauthParams map[string]string) {
-	authHeader := authorizationHeader(oauthParams)
-	req.Header.Set(AUTHORIZATION_HEADER, authHeader)
+	authHeader := getAuthHeader(oauthParams)
+	req.Header.Set(authorizationHeaderKey, authHeader)
 }
 
-// authorizationHeader combines the OAuth1 protocol parameters into an
-// authorization header according to RFC 5849 3.5.1 and returns it.
-// The oauthParams should include the "oauth_signature" key/value pair.
+// getAuthHeader combines the OAuth1 protocol parameters into an authorization
+// header according to RFC 5849 3.5.1 and returns it. The oauthParams should
+// include the "oauth_signature" key/value pair.
 // Does not mutate the oauthParams.
-func authorizationHeader(oauthParams map[string]string) string {
+func getAuthHeader(oauthParams map[string]string) string {
 	// percent encode
 	params := map[string]string{}
 	for key, value := range oauthParams {
@@ -121,7 +121,7 @@ func authorizationHeader(oauthParams map[string]string) string {
 		pairs[i] = fmt.Sprintf("%s=%s", key, value)
 		i++
 	}
-	return AUTHORIZATION_PREFIX + strings.Join(pairs, ", ")
+	return authorizationPrefix + strings.Join(pairs, ", ")
 }
 
 // signatureBase combines the uppercase request method, percent encoded base
@@ -130,7 +130,7 @@ func authorizationHeader(oauthParams map[string]string) string {
 // Does not mutate the Request or basicOAuthParams.
 func signatureBase(req *http.Request, basicOAuthParams map[string]string) (string, error) {
 	method := strings.ToUpper(req.Method)
-	baseUrl := strings.Split(req.URL.String(), "?")[0]
+	baseURL := strings.Split(req.URL.String(), "?")[0]
 	// add oauth, query, and body parameters into params
 	params := map[string]string{}
 	for key, value := range req.URL.Query() {
@@ -158,7 +158,7 @@ func signatureBase(req *http.Request, basicOAuthParams map[string]string) (strin
 	}
 	// encode params into a parameter string (RFC5849 3.4.1.3, 3.4.1.3.2)
 	parameterString := encodeParams(params)
-	baseParts := []string{method, PercentEncode(baseUrl), PercentEncode(parameterString)}
+	baseParts := []string{method, PercentEncode(baseURL), PercentEncode(parameterString)}
 	return strings.Join(baseParts, "&"), nil
 }
 
@@ -174,7 +174,7 @@ func encodeParams(unencodedParams map[string]string) string {
 	// sort by key
 	keys := make([]string, len(params))
 	i := 0
-	for key, _ := range params {
+	for key := range params {
 		keys[i] = key
 		i++
 	}

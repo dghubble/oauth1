@@ -12,6 +12,8 @@ type Transport struct {
 	signer *Signer
 }
 
+// RoundTrip OAuth1 signs the request with the source's access token and sets
+// the authorization header.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	accessToken, err := t.source.Token()
 	if err != nil {

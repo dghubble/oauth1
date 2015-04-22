@@ -7,6 +7,7 @@ type Token struct {
 	TokenSecret string
 }
 
+// NewToken returns a new Token with the given token and token secret.
 func NewToken(token, tokenSecret string) *Token {
 	return &Token{
 		Token:       token,
@@ -27,6 +28,7 @@ type ReuseTokenSource struct {
 	source TokenSource
 }
 
+// Token returns a Token or an error.
 func (ts *ReuseTokenSource) Token() (*Token, error) {
 	return ts.token, nil
 }
