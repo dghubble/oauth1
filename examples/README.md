@@ -28,9 +28,9 @@ The OAuth 1 flow can be used to implement Sign in with Twitter if receipt of an 
 Use an Access Token to make requests on behalf of a Twitter user.
 
     export TWITTER_CONSUMER_KEY=xxx
-    export TWITTER_CONSUMER_SECRET=xxx
+    export TWITTER_CONSUMER_SECRET=yyy
     export TWITTER_ACCESS_TOKEN=xxx
-    export TWITTER_ACCESS_TOKEN_SECRET=xxx
+    export TWITTER_ACCESS_TOKEN_SECRET=yyy
 
 Run to perform requests as the user (reads only, it won't tweet anything)
 
