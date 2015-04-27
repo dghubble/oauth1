@@ -3,21 +3,26 @@
 
 ## Twitter
 
-### Login Flow (PIN)
+### Login Flow (PIN-based)
 
-A consumer application can obtain a Twitter Access Token for a user by requesting the user grant access via [3-legged](https://dev.twitter.com/oauth/3-legged) or [PIN-based](https://dev.twitter.com/oauth/pin-based) OAuth 1. 
+An application can obtain a Twitter Access Token for a user by requesting the user grant access via [3-legged](https://dev.twitter.com/oauth/3-legged) or [PIN-based](https://dev.twitter.com/oauth/pin-based) OAuth 1. 
 
-    export TWITTER_CONSUMER_KEY=xxx
-    export TWITTER_CONSUMER_SECRET=yyy
+```
+export TWITTER_CONSUMER_KEY=xxx
+export TWITTER_CONSUMER_SECRET=yyy
+```
 
-    go run twitter-login.go
+Run `twitter-login.go` to authorize the consumer application to a Twitter account.
 
-    Open this URL in your browser:
-    https://api.twitter.com/oauth/authenticate?oauth_token=xxx
-    Paste your PIN here: ddddddd
-    Consumer was granted an access token to act on behalf of a user.
-    token: ddddd-xxxxx
-    secret: yyyyyy
+```
+go run twitter-login.go
+Open this URL in your browser:
+https://api.twitter.com/oauth/authenticate?oauth_token=xxx
+Paste your PIN here: ddddddd
+Consumer was granted an access token to act on behalf of a user.
+token: ddddd-xxxxx
+secret: yyyyyy
+```
 
 Note that website backends should define a CallbackURL which can receive a verifier string and request an access token, "oob" is for PIN-based agents such as the command line.
 

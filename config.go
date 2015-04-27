@@ -59,7 +59,7 @@ type RequestToken struct {
 // RequestTokenURL. The request is signed by the consumer secret and an empty
 // token secret. The response body form is validated to ensure
 // oauth_callback_confirmed is true. Returns a new RequestToken with the
-// oauth_token and oauth_token_secret in the body.
+// oauth_token and oauth_token_secret from the body.
 // See RFC 5849 2.1 Temporary Credentials.
 func (c *Config) GetRequestToken() (*RequestToken, error) {
 	req, err := http.NewRequest("POST", c.Endpoint.RequestTokenURL, nil)
@@ -115,7 +115,7 @@ func (c *Config) AuthorizationURL(rt *RequestToken) (*url.URL, error) {
 // and oauth_verifier are parsed and returned. The oauth_token (temporary
 // credential) identifies the RequestToken pair obtained from GetRequestToken
 // previously.
-// See RFC 2.2 Resource Owner Authorization.
+// See RFC 5849 2.2 Resource Owner Authorization.
 func (c *Config) HandleAuthorizationCallback(req *http.Request) (tokenKey, verifier string, err error) {
 	// parse the raw query from the URL into req.Form
 	err = req.ParseForm()
@@ -135,7 +135,7 @@ func (c *Config) HandleAuthorizationCallback(req *http.Request) (tokenKey, verif
 // Endpoint AccessTokenURL. The request is signed by the consumer secret and
 // request token secret pair. The access oauth_token and oauth_secret are
 // read from the response body form to return an AccessToken.
-// See RFC 2.3 Token Credentials.
+// See RFC 5849 2.3 Token Credentials.
 func (c *Config) GetAccessToken(requestToken *RequestToken, verifier string) (*Token, error) {
 	req, err := http.NewRequest("POST", c.Endpoint.AccessTokenURL, nil)
 	if err != nil {
