@@ -1,4 +1,4 @@
-// Package twitter implements the Twitter OAuth 1 endpoints.
+// Package twitter provides constants for using OAuth1 to access Twitter.
 package twitter
 
 import (
