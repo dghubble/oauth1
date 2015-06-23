@@ -38,6 +38,12 @@ func (c *Config) Client(t *Token) *http.Client {
 	return NewClient(c, t)
 }
 
+// GetClient returns an HTTP client authorized with the given token and
+// tokenSecret credentials.
+func (c *Config) GetClient(token, tokenSecret string) *http.Client {
+	return NewClient(c, NewToken(token, tokenSecret))
+}
+
 // NewClient returns a new http Client which signs requests via OAuth1.
 func NewClient(config *Config, token *Token) *http.Client {
 	transport := &Transport{

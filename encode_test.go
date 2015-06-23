@@ -13,6 +13,8 @@ func TestPercentEncode(t *testing.T) {
 		{"An encoded string!", "An%20encoded%20string%21"},
 		{"Dogs, Cats & Mice", "Dogs%2C%20Cats%20%26%20Mice"},
 		{"☃", "%E2%98%83"},
+		{"%", "%25"},
+		{"-._", "-._"},
 	}
 	for _, c := range cases {
 		if output := PercentEncode(c.input); output != c.expected {
