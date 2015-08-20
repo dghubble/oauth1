@@ -2,21 +2,20 @@ package main
 
 import (
 	"fmt"
-	"github.com/dghubble/oauth1"
-	twauth "github.com/dghubble/oauth1/twitter"
 	"log"
 	"os"
-)
 
-const outOfBand = "oob"
+	"github.com/dghubble/oauth1"
+	"github.com/dghubble/oauth1/tumblr"
+)
 
 var config oauth1.Config
 
-// main performs Twitter PIN-based 3-legged OAuth 1 from the command line
+// main performs the Tumblr OAuth1 user flow from the command line
 func main() {
 	// read credentials from environment variables
-	consumerKey := os.Getenv("TWITTER_CONSUMER_KEY")
-	consumerSecret := os.Getenv("TWITTER_CONSUMER_SECRET")
+	consumerKey := os.Getenv("TUMBLR_CONSUMER_KEY")
+	consumerSecret := os.Getenv("TUMBLR_CONSUMER_SECRET")
 	if consumerKey == "" || consumerSecret == "" {
 		log.Fatal("Required environment variable missing.")
 	}
@@ -24,8 +23,9 @@ func main() {
 	config = oauth1.Config{
 		ConsumerKey:    consumerKey,
 		ConsumerSecret: consumerSecret,
-		CallbackURL:    outOfBand,
-		Endpoint:       twauth.AuthorizeEndpoint,
+		// Tumblr does not support oob, uses consumer registered callback
+		CallbackURL: "",
+		Endpoint:    tumblr.Endpoint,
 	}
 
 	requestToken, err := login()
@@ -55,7 +55,9 @@ func login() (*oauth1.RequestToken, error) {
 }
 
 func receivePIN(requestToken *oauth1.RequestToken) (*oauth1.Token, error) {
-	fmt.Printf("Paste your PIN here: ")
+	fmt.Printf("Choose whether to grant the application access.\nPaste " +
+		"the oauth_verifier parameter (excluding trailing #_=_) from the " +
+		"address bar: ")
 	var verifier string
 	_, err := fmt.Scanf("%s", &verifier)
 	if err != nil {
