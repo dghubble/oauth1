@@ -13,7 +13,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const (
@@ -37,12 +36,13 @@ const (
 // Signer handles signing requests and setting the authorization header.
 type Signer struct {
 	config *Config
+	clock  clock
 }
 
 // SetRequestTokenAuthHeader adds the OAuth1 header for the request token
 // request (temporary credential) according to RFC 5849 2.1.
 func (s *Signer) SetRequestTokenAuthHeader(req *http.Request) error {
-	oauthParams := basicOAuthParams(s.config.ConsumerKey)
+	oauthParams := s.basicOAuthParams(s.config.ConsumerKey)
 	oauthParams[oauthCallbackParam] = s.config.CallbackURL
 	signatureBase, err := signatureBase(req, oauthParams)
 	if err != nil {
@@ -57,7 +57,7 @@ func (s *Signer) SetRequestTokenAuthHeader(req *http.Request) error {
 // SetAccessTokenAuthHeader sets the OAuth1 header for the access token request
 // (token credential) according to RFC 5849 2.3.
 func (s *Signer) SetAccessTokenAuthHeader(req *http.Request, requestToken *RequestToken, verifier string) error {
-	oauthParams := basicOAuthParams(s.config.ConsumerKey)
+	oauthParams := s.basicOAuthParams(s.config.ConsumerKey)
 	oauthParams[oauthTokenParam] = requestToken.Token
 	oauthParams[oauthVerifierParam] = verifier
 	signatureBase, err := signatureBase(req, oauthParams)
@@ -73,7 +73,7 @@ func (s *Signer) SetAccessTokenAuthHeader(req *http.Request, requestToken *Reque
 // SetRequestAuthHeader sets the OAuth1 header for making authenticated
 // requests with an AccessToken (token credential) according to RFC 5849 3.1.
 func (s *Signer) SetRequestAuthHeader(req *http.Request, accessToken *Token) error {
-	oauthParams := basicOAuthParams(s.config.ConsumerKey)
+	oauthParams := s.basicOAuthParams(s.config.ConsumerKey)
 	oauthParams[oauthTokenParam] = accessToken.Token
 	signatureBase, err := signatureBase(req, oauthParams)
 	if err != nil {
@@ -87,11 +87,11 @@ func (s *Signer) SetRequestAuthHeader(req *http.Request, accessToken *Token) err
 
 // basicOAuthParams returns a map of the common OAuth1 protocol parameters,
 // excluding the oauth_signature parameter.
-func basicOAuthParams(consumerKey string) map[string]string {
+func (s *Signer) basicOAuthParams(consumerKey string) map[string]string {
 	return map[string]string{
 		oauthConsumerKeyParam:     consumerKey,
 		oauthSignatureMethodParam: defaultSignatureMethod,
-		oauthTimestampParam:       strconv.FormatInt(epoch(), 10),
+		oauthTimestampParam:       strconv.FormatInt(epoch(s.clock), 10),
 		oauthNonceParam:           nonce(),
 		oauthVersionParam:         defaultOauthVersion,
 	}
@@ -206,6 +206,6 @@ func nonce() string {
 }
 
 // Returns the epoch
-func epoch() int64 {
-	return time.Now().Unix()
+func epoch(clock clock) int64 {
+	return clock.Now().Unix()
 }

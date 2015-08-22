@@ -48,7 +48,7 @@ func (c *Config) GetClient(token, tokenSecret string) *http.Client {
 func NewClient(config *Config, token *Token) *http.Client {
 	transport := &Transport{
 		source: &ReuseTokenSource{token, nil},
-		signer: &Signer{config},
+		signer: &Signer{config: config, clock: newRealClock()},
 	}
 	return &http.Client{Transport: transport}
 }
@@ -72,7 +72,7 @@ func (c *Config) GetRequestToken() (*RequestToken, error) {
 	if err != nil {
 		return nil, err
 	}
-	signer := &Signer{c}
+	signer := &Signer{config: c, clock: newRealClock()}
 	signer.SetRequestTokenAuthHeader(req)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -147,7 +147,7 @@ func (c *Config) GetAccessToken(requestToken *RequestToken, verifier string) (*T
 	if err != nil {
 		return nil, err
 	}
-	signer := &Signer{c}
+	signer := &Signer{config: c, clock: newRealClock()}
 	signer.SetAccessTokenAuthHeader(req, requestToken, verifier)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
