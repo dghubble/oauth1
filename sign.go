@@ -37,6 +37,7 @@ const (
 type Signer struct {
 	config *Config
 	clock  clock
+	noncer noncer
 }
 
 // SetRequestTokenAuthHeader adds the OAuth1 header for the request token
@@ -91,10 +92,25 @@ func (s *Signer) basicOAuthParams(consumerKey string) map[string]string {
 	return map[string]string{
 		oauthConsumerKeyParam:     consumerKey,
 		oauthSignatureMethodParam: defaultSignatureMethod,
-		oauthTimestampParam:       strconv.FormatInt(epoch(s.clock), 10),
-		oauthNonceParam:           nonce(),
+		oauthTimestampParam:       strconv.FormatInt(s.epoch(), 10),
+		oauthNonceParam:           s.nonce(),
 		oauthVersionParam:         defaultOauthVersion,
 	}
+}
+
+// Returns a base64 encoded random 32 bytes.
+func (s *Signer) nonce() string {
+	if s.noncer != nil {
+		return s.noncer.Nonce()
+	}
+	b := make([]byte, 32)
+	rand.Read(b)
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+// Returns the Unix epoch seconds.
+func (s *Signer) epoch() int64 {
+	return s.clock.Now().Unix()
 }
 
 // setAuthorizationHeader formats the OAuth1 protocol parameters into a header
@@ -196,16 +212,4 @@ func signature(consumerSecret, tokenSecret, message string) string {
 	mac.Write([]byte(message))
 	signatureBytes := mac.Sum(nil)
 	return base64.StdEncoding.EncodeToString(signatureBytes)
-}
-
-// Returns a base64 encoded random 32 bytes.
-func nonce() string {
-	b := make([]byte, 32)
-	rand.Read(b)
-	return base64.StdEncoding.EncodeToString(b)
-}
-
-// Returns the epoch
-func epoch(clock clock) int64 {
-	return clock.Now().Unix()
 }

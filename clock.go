@@ -20,3 +20,7 @@ func newRealClock() clock {
 func (c *realClock) Now() time.Time {
 	return time.Now()
 }
+
+type noncer interface {
+	Nonce() string
+}
