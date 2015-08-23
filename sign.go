@@ -130,6 +130,35 @@ func authHeaderValue(oauthParams map[string]string) string {
 	return authorizationPrefix + strings.Join(pairs, ", ")
 }
 
+// encodeParameters percent encodes parameter keys and values according to
+// RFC5849 3.6 and RFC3986 2.1 and returns a new map.
+func encodeParameters(params map[string]string) map[string]string {
+	encoded := map[string]string{}
+	for key, value := range params {
+		encoded[PercentEncode(key)] = PercentEncode(value)
+	}
+	return encoded
+}
+
+// sortParameters sorts parameters by key and returns a slice of key=value
+// pair strings.
+func sortParameters(params map[string]string) []string {
+	// sort by key
+	keys := make([]string, len(params))
+	i := 0
+	for key := range params {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	// parameter join
+	pairs := make([]string, len(params))
+	for i, key := range keys {
+		pairs[i] = fmt.Sprintf("%s=%s", key, params[key])
+	}
+	return pairs
+}
+
 // signatureBase combines the uppercase request method, percent encoded base
 // string URI, and parameter string. Returns the OAuth1 signature base string
 // according to RFC5849 3.4.1.
@@ -168,35 +197,6 @@ func signatureBase(req *http.Request, oauthParams map[string]string) (string, er
 	// signature base string constructed accoding to 3.4.1.1
 	baseParts := []string{method, PercentEncode(baseURL), PercentEncode(parameterString)}
 	return strings.Join(baseParts, "&"), nil
-}
-
-// encodeParameters percent encodes parameter keys and values according to
-// RFC5849 3.6 and RFC3986 2.1 and returns a new map.
-func encodeParameters(params map[string]string) map[string]string {
-	encoded := map[string]string{}
-	for key, value := range params {
-		encoded[PercentEncode(key)] = PercentEncode(value)
-	}
-	return encoded
-}
-
-// sortParameters sorts parameters by key and returns a slice of key=value
-// pair strings.
-func sortParameters(params map[string]string) []string {
-	// sort by key
-	keys := make([]string, len(params))
-	i := 0
-	for key := range params {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	// parameter join
-	pairs := make([]string, len(params))
-	for i, key := range keys {
-		pairs[i] = fmt.Sprintf("%s=%s", key, params[key])
-	}
-	return pairs
 }
 
 // signature creates a signing key from the consumer and token secrets and

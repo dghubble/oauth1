@@ -3,6 +3,7 @@ package oauth1
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -86,6 +87,68 @@ func TestSetAccessTokenAuthHeader(t *testing.T) {
 	assert.Equal(t, expectedTimestamp, params[oauthTimestampParam])
 	assert.Equal(t, expectedVersion, params[oauthVersionParam])
 	assert.Equal(t, expectedSignatureMethod, params[oauthSignatureMethodParam])
+}
+
+// example from https://dev.twitter.com/oauth/overview/authorizing-requests,
+// https://dev.twitter.com/oauth/overview/creating-signatures, and
+// https://dev.twitter.com/oauth/application-only
+var expectedTwitterConsumerKey = "xvz1evFS4wEEPTGEFPHBog"
+var expectedTwitterOAuthToken = "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb"
+var twitterConfig = &Config{
+	ConsumerKey:    expectedTwitterConsumerKey,
+	ConsumerSecret: "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw",
+	Endpoint: Endpoint{
+		RequestTokenURL: "https://api.twitter.com/oauth/request_token",
+		AuthorizeURL:    "https://api.twitter.com/oauth/authorize",
+		AccessTokenURL:  "https://api.twitter.com/oauth/access_token",
+	},
+}
+
+func TestSignatureBase(t *testing.T) {
+	var unixTimestamp int64 = 1318622958
+	expectedNonce := "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg"
+	signer := &Signer{twitterConfig, &fixedClock{time.Unix(unixTimestamp, 0)}, &fixedNoncer{expectedNonce}}
+	values := url.Values{}
+	values.Add("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
+	// note: the reference example is old and uses api v1 in the URL
+	req, err := http.NewRequest("post", "https://api.twitter.com/1/statuses/update.json?include_entities=true", strings.NewReader(values.Encode()))
+	req.Header.Set(contentType, formContentType)
+	params := signer.commonOAuthParams()
+	params[oauthTokenParam] = expectedTwitterOAuthToken
+	signatureBase, err := signatureBase(req, params)
+	// assert that the signature base string matches the reference
+	// checks that method is uppercased, url is encoded, parameter string is added, all joined by &
+	expectedSignatureBase := "POST&https%3A%2F%2Fapi.twitter.com%2F1%2Fstatuses%2Fupdate.json&include_entities%3Dtrue%26oauth_consumer_key%3Dxvz1evFS4wEEPTGEFPHBog%26oauth_nonce%3DkYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1318622958%26oauth_token%3D370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb%26oauth_version%3D1.0%26status%3DHello%2520Ladies%2520%252B%2520Gentlemen%252C%2520a%2520signed%2520OAuth%2520request%2521"
+	assert.Nil(t, err)
+	assert.Equal(t, expectedSignatureBase, signatureBase)
+}
+
+func TestRequestAuthHeader(t *testing.T) {
+	var unixTimestamp int64 = 1318622958
+	oauthTokenSecret := "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE"
+	expectedSignature := PercentEncode("tnnArxj06cWHq44gCs1OSKk/jLY=")
+	expectedTimestamp := "1318622958"
+	expectedNonce := "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg"
+
+	signer := &Signer{twitterConfig, &fixedClock{time.Unix(unixTimestamp, 0)}, &fixedNoncer{expectedNonce}}
+	values := url.Values{}
+	values.Add("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
+
+	accessToken := &Token{expectedTwitterOAuthToken, oauthTokenSecret}
+	req, err := http.NewRequest("POST", "https://api.twitter.com/1/statuses/update.json?include_entities=true", strings.NewReader(values.Encode()))
+	req.Header.Set(contentType, formContentType)
+	err = signer.SetRequestAuthHeader(req, accessToken)
+	// assert that request is signed and has an access token token
+	assert.Nil(t, err)
+	params := parseOAuthParamsOrFail(t, req.Header.Get(authorizationHeaderParam))
+	assert.Equal(t, expectedTwitterOAuthToken, params[oauthTokenParam])
+	assert.Equal(t, expectedSignature, params[oauthSignatureParam])
+	// additional OAuth parameters
+	assert.Equal(t, expectedTwitterConsumerKey, params[oauthConsumerKeyParam])
+	assert.Equal(t, expectedNonce, params[oauthNonceParam])
+	assert.Equal(t, expectedSignatureMethod, params[oauthSignatureMethodParam])
+	assert.Equal(t, expectedTimestamp, params[oauthTimestampParam])
+	assert.Equal(t, expectedVersion, params[oauthVersionParam])
 }
 
 func TestEncodeParameters(t *testing.T) {
