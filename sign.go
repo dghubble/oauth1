@@ -162,7 +162,6 @@ func sortParameters(params map[string]string) []string {
 // signatureBase combines the uppercase request method, percent encoded base
 // string URI, and parameter string. Returns the OAuth1 signature base string
 // according to RFC5849 3.4.1.
-// Does not mutate the Request or oauthParams.
 func signatureBase(req *http.Request, oauthParams map[string]string) (string, error) {
 	method := strings.ToUpper(req.Method)
 	baseURL := strings.Split(req.URL.String(), "?")[0]
