@@ -167,6 +167,23 @@ func signatureBase(req *http.Request, oauthParams map[string]string) (string, er
 	method := strings.ToUpper(req.Method)
 	baseURL := strings.Split(req.URL.String(), "?")[0]
 	// add oauth, query, and body parameters into params
+	params, err := collectParameters(req, oauthParams)
+	if err != nil {
+		return "", err
+	}
+	parameterString := normalizedParameterString(params)
+	// signature base string constructed accoding to 3.4.1.1
+	baseParts := []string{method, PercentEncode(baseURL), PercentEncode(parameterString)}
+	return strings.Join(baseParts, "&"), nil
+}
+
+// collectParameters collects request parameters from the request query, OAuth
+// parameters (which should exclude oauth_signature), and the request body
+// provided the body is single part, form encoded, and the form content type
+// header is set. The returned map of collected parameter keys and values
+// follow RFC 5849 3.4.1.3, except duplicate parameters are not supported.
+func collectParameters(req *http.Request, oauthParams map[string]string) (map[string]string, error) {
+	// add oauth, query, and body parameters into params
 	params := map[string]string{}
 	for key, value := range req.URL.Query() {
 		// most backends do not accept duplicate query keys
@@ -176,13 +193,14 @@ func signatureBase(req *http.Request, oauthParams map[string]string) (string, er
 		// reads data to a []byte, draining req.Body
 		b, err := ioutil.ReadAll(req.Body)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		values, err := url.ParseQuery(string(b))
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		for key, value := range values {
+			// not supporting params with duplicate keys
 			params[key] = value[0]
 		}
 		// reinitialize Body with ReadCloser over the []byte
@@ -191,12 +209,15 @@ func signatureBase(req *http.Request, oauthParams map[string]string) (string, er
 	for key, value := range oauthParams {
 		params[key] = value
 	}
-	// params are encoded, sorted by key, and joined with = and & (e.g. foo=bar&q=gopher)
-	// to produce a parameter string according to RFC5894 3.4.1.3.2
-	parameterString := strings.Join(sortParameters(encodeParameters(params)), "&")
-	// signature base string constructed accoding to 3.4.1.1
-	baseParts := []string{method, PercentEncode(baseURL), PercentEncode(parameterString)}
-	return strings.Join(baseParts, "&"), nil
+	return params, nil
+}
+
+// parameterString normalizes collected OAuth parameters (which should exclude
+// oauth_signature) into a parameter string as defined in RFC 5894 3.4.1.3.2.
+// The parameters are encoded, sorted by key, keys and values joined with "&",
+// and pairs joined with "=" (e.g. foo=bar&q=gopher).
+func normalizedParameterString(params map[string]string) string {
+	return strings.Join(sortParameters(encodeParameters(params)), "&")
 }
 
 // signature creates a signing key from the consumer and token secrets and
