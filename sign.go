@@ -116,27 +116,17 @@ func (s *Signer) epoch() int64 {
 // setAuthorizationHeader formats the OAuth1 protocol parameters into a header
 // and sets the header on the Request.
 func setAuthorizationHeader(req *http.Request, oauthParams map[string]string) {
-	authHeader := getAuthHeader(oauthParams)
+	authHeader := authHeaderValue(oauthParams)
 	req.Header.Set(authorizationHeaderParam, authHeader)
 }
 
-// getAuthHeader combines the OAuth1 protocol parameters into an authorization
-// header according to RFC 5849 3.5.1 and returns it. The oauthParams should
-// include the "oauth_signature" key/value pair.
-// Does not mutate the oauthParams.
-func getAuthHeader(oauthParams map[string]string) string {
-	// percent encode
-	params := map[string]string{}
-	for key, value := range oauthParams {
-		params[PercentEncode(key)] = PercentEncode(value)
-	}
-	// parameter join
-	pairs := make([]string, len(params))
-	i := 0
-	for key, value := range params {
-		pairs[i] = fmt.Sprintf("%s=%s", key, value)
-		i++
-	}
+// authHeaderValue formats OAuth parameters according to RFC 5849 3.5.1. OAuth
+// params are percent encoded, sorted by key (for testability), and joined by
+// "=" into pairs. Pairs are joined with a ", " comma separator into a header
+// string.
+// The given OAuth params should include the "oauth_signature" key.
+func authHeaderValue(oauthParams map[string]string) string {
+	pairs := sortParameters(encodeParameters(oauthParams))
 	return authorizationPrefix + strings.Join(pairs, ", ")
 }
 
@@ -172,21 +162,27 @@ func signatureBase(req *http.Request, oauthParams map[string]string) (string, er
 	for key, value := range oauthParams {
 		params[key] = value
 	}
-	// encode params into a parameter string (RFC5849 3.4.1.3, 3.4.1.3.2)
-	parameterString := encodeParams(params)
+	// params are encoded, sorted by key, and joined with = and & (e.g. foo=bar&q=gopher)
+	// to produce a parameter string according to RFC5894 3.4.1.3.2
+	parameterString := strings.Join(sortParameters(encodeParameters(params)), "&")
+	// signature base string constructed accoding to 3.4.1.1
 	baseParts := []string{method, PercentEncode(baseURL), PercentEncode(parameterString)}
 	return strings.Join(baseParts, "&"), nil
 }
 
-// encodeParams percent encodes parameter keys and values (RFC5849 3.6 and
-// RFC3986 2.1), sorts parameters by key, and formats them into a parameter
-// string (RFC5894 3.4.1.3.2, e.g. foo=bar&q=gopher).
-func encodeParams(unencodedParams map[string]string) string {
-	// percent encode
-	params := map[string]string{}
-	for key, value := range unencodedParams {
-		params[PercentEncode(key)] = PercentEncode(value)
+// encodeParameters percent encodes parameter keys and values according to
+// RFC5849 3.6 and RFC3986 2.1 and returns a new map.
+func encodeParameters(params map[string]string) map[string]string {
+	encoded := map[string]string{}
+	for key, value := range params {
+		encoded[PercentEncode(key)] = PercentEncode(value)
 	}
+	return encoded
+}
+
+// sortParameters sorts parameters by key and returns a slice of key=value
+// pair strings.
+func sortParameters(params map[string]string) []string {
 	// sort by key
 	keys := make([]string, len(params))
 	i := 0
@@ -200,7 +196,7 @@ func encodeParams(unencodedParams map[string]string) string {
 	for i, key := range keys {
 		pairs[i] = fmt.Sprintf("%s=%s", key, params[key])
 	}
-	return strings.Join(pairs, "&")
+	return pairs
 }
 
 // signature creates a signing key from the consumer and token secrets and
