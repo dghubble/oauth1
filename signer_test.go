@@ -88,6 +88,19 @@ func TestSetAccessTokenAuthHeader(t *testing.T) {
 	assert.Equal(t, expectedSignatureMethod, params[oauthSignatureMethodParam])
 }
 
+func TestCommonOAuthParams(t *testing.T) {
+	config := &Config{ConsumerKey: "some_consumer_key"}
+	signer := &Signer{config, &fixedClock{time.Unix(50037133, 0)}, &fixedNoncer{"some_nonce"}}
+	expectedParams := map[string]string{
+		"oauth_consumer_key":     "some_consumer_key",
+		"oauth_signature_method": "HMAC-SHA1",
+		"oauth_timestamp":        "50037133",
+		"oauth_nonce":            "some_nonce",
+		"oauth_version":          "1.0",
+	}
+	assert.Equal(t, expectedParams, signer.commonOAuthParams())
+}
+
 func parseOAuthParamsOrFail(t *testing.T, authHeader string) map[string]string {
 	if !strings.HasPrefix(authHeader, authorizationPrefix) {
 		assert.Fail(t, fmt.Sprintf("Expected Authorization header to start with \"%s\", got \"%s\"", authorizationPrefix, authHeader[:len(authorizationPrefix)+1]))
