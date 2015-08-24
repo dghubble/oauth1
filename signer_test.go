@@ -213,3 +213,12 @@ func TestSignature(t *testing.T) {
 	expectedSignature := "BE0uILOruKfSXd4UzYlLJDfOq08="
 	assert.Equal(t, expectedSignature, signature(consumerSecret, tokenSecret, message))
 }
+
+func TestNewRealClock(t *testing.T) {
+	// assert that realClock implements the clock interface
+	var _ clock = (*realClock)(nil)                     // compilation assertion
+	assert.Implements(t, (*clock)(nil), newRealClock()) // not truly needed
+	// assert that realClock returns a sane current time
+	rk := newRealClock()
+	assert.InEpsilon(t, time.Now().Unix(), rk.Now().Unix(), 1)
+}
