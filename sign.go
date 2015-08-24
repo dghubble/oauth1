@@ -49,10 +49,7 @@ func (s *Signer) SetRequestTokenAuthHeader(req *http.Request) error {
 	if err != nil {
 		return err
 	}
-	signatureBase, err := signatureBase(req, params)
-	if err != nil {
-		return err
-	}
+	signatureBase := signatureBase(req, params)
 	signature := signature(s.config.ConsumerSecret, "", signatureBase)
 	oauthParams[oauthSignatureParam] = signature
 	setAuthorizationHeader(req, authHeaderValue(oauthParams))
@@ -69,10 +66,7 @@ func (s *Signer) SetAccessTokenAuthHeader(req *http.Request, requestToken *Reque
 	if err != nil {
 		return err
 	}
-	signatureBase, err := signatureBase(req, params)
-	if err != nil {
-		return err
-	}
+	signatureBase := signatureBase(req, params)
 	signature := signature(s.config.ConsumerSecret, requestToken.TokenSecret, signatureBase)
 	oauthParams[oauthSignatureParam] = signature
 	setAuthorizationHeader(req, authHeaderValue(oauthParams))
@@ -88,10 +82,7 @@ func (s *Signer) SetRequestAuthHeader(req *http.Request, accessToken *Token) err
 	if err != nil {
 		return err
 	}
-	signatureBase, err := signatureBase(req, params)
-	if err != nil {
-		return err
-	}
+	signatureBase := signatureBase(req, params)
 	signature := signature(s.config.ConsumerSecret, accessToken.TokenSecret, signatureBase)
 	oauthParams[oauthSignatureParam] = signature
 	setAuthorizationHeader(req, authHeaderValue(oauthParams))
@@ -208,13 +199,32 @@ func collectParameters(req *http.Request, oauthParams map[string]string) (map[st
 // signatureBase combines the uppercase request method, percent encoded base
 // string URI, and normalizes the request parameters int a parameter string.
 // Returns the OAuth1 signature base string according to RFC5849 3.4.1.
-func signatureBase(req *http.Request, params map[string]string) (string, error) {
+func signatureBase(req *http.Request, params map[string]string) string {
 	method := strings.ToUpper(req.Method)
-	baseURL := strings.Split(req.URL.String(), "?")[0]
+	baseURL := baseURI(req)
 	parameterString := normalizedParameterString(params)
 	// signature base string constructed accoding to 3.4.1.1
 	baseParts := []string{method, PercentEncode(baseURL), PercentEncode(parameterString)}
-	return strings.Join(baseParts, "&"), nil
+	return strings.Join(baseParts, "&")
+}
+
+// baseURI returns the base string URI of a request according to RFC 5849
+// 3.4.1.2. The scheme and host are lowercased, the port is dropped if it
+// is 80 or 443, and the path minus query parameters is included.
+func baseURI(req *http.Request) string {
+	scheme := strings.ToLower(req.URL.Scheme)
+	host := strings.ToLower(req.URL.Host)
+	if hostPort := strings.Split(host, ":"); len(hostPort) == 2 && (hostPort[1] == "80" || hostPort[1] == "443") {
+		host = hostPort[0]
+	}
+	// TODO: use req.URL.EscapedPath() once Go 1.5 is more generally adopted
+	// For now, hacky workaround accomplishes the same internal escaping mode
+	// escape(u.Path, encodePath) for proper compliance with the OAuth1 spec.
+	path := req.URL.Path
+	if path != "" {
+		path = strings.Split(req.URL.RequestURI(), "?")[0]
+	}
+	return fmt.Sprintf("%v://%v%v", scheme, host, path)
 }
 
 // parameterString normalizes collected OAuth parameters (which should exclude

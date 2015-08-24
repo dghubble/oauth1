@@ -11,6 +11,7 @@ func TestPercentEncode(t *testing.T) {
 	}{
 		{" ", "%20"},
 		{"%", "%25"},
+		{"&", "%26"},
 		{"-._", "-._"},
 		{" /=+", "%20%2F%3D%2B"},
 		{"Ladies + Gentlemen", "Ladies%20%2B%20Gentlemen"},

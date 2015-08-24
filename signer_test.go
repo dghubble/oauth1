@@ -136,8 +136,8 @@ func TestCollectParameters(t *testing.T) {
 }
 
 func TestSignatureBase(t *testing.T) {
-	//reqA, err := http.NewRequest("get", "HTTPS://HELLO.IO?q=test", nil)
-	//assert.Nil(t, err)
+	reqA, err := http.NewRequest("get", "HTTPS://HELLO.IO?q=test", nil)
+	assert.Nil(t, err)
 	reqB, err := http.NewRequest("POST", "http://hello.io:8080", nil)
 	assert.Nil(t, err)
 	cases := []struct {
@@ -145,13 +145,33 @@ func TestSignatureBase(t *testing.T) {
 		params        map[string]string
 		signatureBase string
 	}{
-		//{reqA, map[string]string{"a": "b", "c": "d"}, ""},
+		{reqA, map[string]string{"a": "b", "c": "d"}, "GET&https%3A%2F%2Fhello.io&a%3Db%26c%3Dd"},
 		{reqB, map[string]string{"a": "b"}, "POST&http%3A%2F%2Fhello.io%3A8080&a%3Db"},
 	}
+	// assert that method is uppercased, base uri rules applied, queries added, joined by &
 	for _, c := range cases {
-		base, err := signatureBase(c.req, c.params)
-		assert.Nil(t, err)
+		base := signatureBase(c.req, c.params)
 		assert.Equal(t, c.signatureBase, base)
+	}
+}
+
+func TestBaseURI(t *testing.T) {
+	reqA, err := http.NewRequest("GET", "HTTP://EXAMPLE.COM:80/r%20v/X?id=123", nil)
+	assert.Nil(t, err)
+	reqB, err := http.NewRequest("POST", "https://www.example.net:8080/?q=1", nil)
+	assert.Nil(t, err)
+	reqC, err := http.NewRequest("POST", "https://example.com:443", nil)
+	cases := []struct {
+		req     *http.Request
+		baseURI string
+	}{
+		{reqA, "http://example.com/r%20v/X"},
+		{reqB, "https://www.example.net:8080/"},
+		{reqC, "https://example.com"},
+	}
+	for _, c := range cases {
+		baseURI := baseURI(c.req)
+		assert.Equal(t, c.baseURI, baseURI)
 	}
 }
 
