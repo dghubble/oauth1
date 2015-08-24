@@ -23,6 +23,24 @@ func TestCommonOAuthParams(t *testing.T) {
 	assert.Equal(t, expectedParams, signer.commonOAuthParams())
 }
 
+func TestNonce(t *testing.T) {
+	signer := &Signer{}
+	nonce := signer.nonce()
+	// assert that 32 bytes (256 bites) become 44 bytes since a base64 byte
+	// zeros the 2 high bits. 3 bytes convert to 4 base64 bytes, 40 base64 bytes
+	// represent the first 30 of 32 bytes, = padding adds another 4 byte group.
+	// base64 bytes = 4 * floor(bytes/3) + 4
+	assert.Equal(t, 44, len([]byte(nonce)))
+}
+
+func TestSetAuthorizationHeader(t *testing.T) {
+	expectedHeaderValue := "test_authorization_string"
+	req, err := http.NewRequest("GET", "/", nil)
+	assert.Nil(t, err)
+	setAuthorizationHeader(req, expectedHeaderValue)
+	assert.Equal(t, req.Header.Get("Authorization"), expectedHeaderValue)
+}
+
 func TestAuthHeaderValue(t *testing.T) {
 	cases := []struct {
 		params     map[string]string
@@ -117,6 +135,26 @@ func TestCollectParameters(t *testing.T) {
 	// http://golang.org/src/net/http/request.go#L837
 }
 
+func TestSignatureBase(t *testing.T) {
+	//reqA, err := http.NewRequest("get", "HTTPS://HELLO.IO?q=test", nil)
+	//assert.Nil(t, err)
+	reqB, err := http.NewRequest("POST", "http://hello.io:8080", nil)
+	assert.Nil(t, err)
+	cases := []struct {
+		req           *http.Request
+		params        map[string]string
+		signatureBase string
+	}{
+		//{reqA, map[string]string{"a": "b", "c": "d"}, ""},
+		{reqB, map[string]string{"a": "b"}, "POST&http%3A%2F%2Fhello.io%3A8080&a%3Db"},
+	}
+	for _, c := range cases {
+		base, err := signatureBase(c.req, c.params)
+		assert.Nil(t, err)
+		assert.Equal(t, c.signatureBase, base)
+	}
+}
+
 func TestNormalizedParameterString(t *testing.T) {
 	simple := map[string]string{
 		"a": "b & c",
@@ -136,13 +174,22 @@ func TestNormalizedParameterString(t *testing.T) {
 		"plus":                   "2 q",
 	}
 	cases := []struct {
-		params     map[string]string
-		authHeader string
+		params       map[string]string
+		parameterStr string
 	}{
 		{simple, "%E2%98%83=snowman&a=b%20%26%20c"},
 		{rfcExample, "a2=r%20b&a3=a&b5=%3D%253D&c%40=&c2=&oauth_consumer_key=9djdj82h48djs9d2&oauth_nonce=7d8f3e4a&oauth_signature_method=HMAC-SHA1&oauth_timestamp=137131201&oauth_token=kkk9d7dh3k39sjv7&plus=2%20q"},
 	}
 	for _, c := range cases {
-		assert.Equal(t, c.authHeader, normalizedParameterString(c.params))
+		assert.Equal(t, c.parameterStr, normalizedParameterString(c.params))
 	}
+}
+
+func TestSignature(t *testing.T) {
+	consumerSecret := "consumer_secret"
+	tokenSecret := "token_secret"
+	message := "hello world"
+	// echo -n "hello world" | openssl dgst -sha1 -hmac "consumer_secret&token_secret" -binary | base64
+	expectedSignature := "BE0uILOruKfSXd4UzYlLJDfOq08="
+	assert.Equal(t, expectedSignature, signature(consumerSecret, tokenSecret, message))
 }

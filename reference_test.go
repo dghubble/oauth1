@@ -16,7 +16,7 @@ const (
 	expectedSignatureMethod = "HMAC-SHA1"
 )
 
-func TestSetRequestTokenAuthHeader(t *testing.T) {
+func TestTwitterRequestTokenAuthHeader(t *testing.T) {
 	// example from https://dev.twitter.com/web/sign-in/implementing
 	var unixTimestamp int64 = 1318467427
 	expectedConsumerKey := "cChZNFj6T5R0TigYB9yd1w"
@@ -52,7 +52,7 @@ func TestSetRequestTokenAuthHeader(t *testing.T) {
 	assert.Equal(t, expectedSignatureMethod, params[oauthSignatureMethodParam])
 }
 
-func TestSetAccessTokenAuthHeader(t *testing.T) {
+func TestTwitterAccessTokenAuthHeader(t *testing.T) {
 	// example from https://dev.twitter.com/web/sign-in/implementing
 	var unixTimestamp int64 = 1318467427
 	expectedConsumerKey := "cChZNFj6T5R0TigYB9yd1w"
@@ -108,7 +108,7 @@ var twitterConfig = &Config{
 	},
 }
 
-func TestParameterString(t *testing.T) {
+func TestTwitterParameterString(t *testing.T) {
 	signer := &Signer{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}, &fixedNoncer{expectedNonce}}
 	values := url.Values{}
 	values.Add("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
@@ -125,7 +125,7 @@ func TestParameterString(t *testing.T) {
 	assert.Equal(t, expectedParameterString, normalizedParameterString(params))
 }
 
-func TestSignatureBase(t *testing.T) {
+func TestTwitterSignatureBase(t *testing.T) {
 	signer := &Signer{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}, &fixedNoncer{expectedNonce}}
 	values := url.Values{}
 	values.Add("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
@@ -135,7 +135,8 @@ func TestSignatureBase(t *testing.T) {
 	req.Header.Set(contentType, formContentType)
 	oauthParams := signer.commonOAuthParams()
 	oauthParams[oauthTokenParam] = expectedTwitterOAuthToken
-	signatureBase, err := signatureBase(req, oauthParams)
+	params, err := collectParameters(req, oauthParams)
+	signatureBase, err := signatureBase(req, params)
 	// assert that the signature base string matches the reference
 	// checks that method is uppercased, url is encoded, parameter string is added, all joined by &
 	expectedSignatureBase := "POST&https%3A%2F%2Fapi.twitter.com%2F1%2Fstatuses%2Fupdate.json&include_entities%3Dtrue%26oauth_consumer_key%3Dxvz1evFS4wEEPTGEFPHBog%26oauth_nonce%3DkYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1318622958%26oauth_token%3D370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb%26oauth_version%3D1.0%26status%3DHello%2520Ladies%2520%252B%2520Gentlemen%252C%2520a%2520signed%2520OAuth%2520request%2521"
@@ -143,7 +144,7 @@ func TestSignatureBase(t *testing.T) {
 	assert.Equal(t, expectedSignatureBase, signatureBase)
 }
 
-func TestRequestAuthHeader(t *testing.T) {
+func TestTwitterRequestAuthHeader(t *testing.T) {
 	oauthTokenSecret := "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE"
 	expectedSignature := PercentEncode("tnnArxj06cWHq44gCs1OSKk/jLY=")
 	expectedTimestamp := "1318622958"
