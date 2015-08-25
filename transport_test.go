@@ -38,7 +38,7 @@ func TestTransport(t *testing.T) {
 		noncer: &fixedNoncer{expectedNonce},
 	}
 	tr := &Transport{
-		source: &ReuseTokenSource{NewToken(expectedToken, "some_secret"), nil},
+		source: StaticTokenSource(NewToken(expectedToken, "some_secret")),
 		signer: signer,
 	}
 	client := &http.Client{Transport: tr}
@@ -61,18 +61,39 @@ func TestTransport_nilSource(t *testing.T) {
 	client := &http.Client{Transport: tr}
 	resp, err := client.Get("http://example.com")
 	assert.Nil(t, resp)
-	assert.Equal(t, "Get http://example.com: oauth1: Transport's source is nil", err.Error())
+	if assert.Error(t, err) {
+		assert.Equal(t, "Get http://example.com: oauth1: Transport's source is nil", err.Error())
+	}
+}
+
+func TestTransport_emptySource(t *testing.T) {
+	tr := &Transport{
+		source: StaticTokenSource(nil),
+		signer: &Signer{
+			config: &Config{},
+			clock:  &fixedClock{time.Unix(123456789, 0)},
+			noncer: &fixedNoncer{"any_nonce"},
+		},
+	}
+	client := &http.Client{Transport: tr}
+	resp, err := client.Get("http://example.com")
+	assert.Nil(t, resp)
+	if assert.Error(t, err) {
+		assert.Equal(t, "Get http://example.com: oauth1: Token is nil", err.Error())
+	}
 }
 
 func TestTransport_nilSigner(t *testing.T) {
 	tr := &Transport{
-		source: &ReuseTokenSource{&Token{}, nil},
+		source: StaticTokenSource(&Token{}),
 		signer: nil,
 	}
 	client := &http.Client{Transport: tr}
 	resp, err := client.Get("http://example.com")
 	assert.Nil(t, resp)
-	assert.Equal(t, "Get http://example.com: oauth1: Transport's signer is nil", err.Error())
+	if assert.Error(t, err) {
+		assert.Equal(t, "Get http://example.com: oauth1: Transport's signer is nil", err.Error())
+	}
 }
 
 func newMockServer(handler func(w http.ResponseWriter, r *http.Request)) *httptest.Server {

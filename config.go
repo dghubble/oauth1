@@ -47,7 +47,7 @@ func (c *Config) GetClient(token, tokenSecret string) *http.Client {
 // NewClient returns a new http Client which signs requests via OAuth1.
 func NewClient(config *Config, token *Token) *http.Client {
 	transport := &Transport{
-		source: &ReuseTokenSource{token, nil},
+		source: StaticTokenSource(token),
 		signer: &Signer{config: config, clock: newRealClock()},
 	}
 	return &http.Client{Transport: transport}
