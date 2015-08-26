@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/dghubble/oauth1"
-	twauth "github.com/dghubble/oauth1/twitter"
 	"log"
 	"os"
+
+	"github.com/dghubble/oauth1"
+	twauth "github.com/dghubble/oauth1/twitter"
 )
 
 const outOfBand = "oob"
@@ -41,25 +42,34 @@ func main() {
 	fmt.Printf("token: %s\nsecret: %s\n", accessToken.Token, accessToken.TokenSecret)
 }
 
-func login() (*oauth1.RequestToken, error) {
-	requestToken, err := config.GetRequestToken()
+func login() (requestToken string, err error) {
+	requestToken, _, err = config.RequestToken()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	authorizationURL, err := config.AuthorizationURL(requestToken)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	fmt.Printf("Open this URL in your browser:\n%s\n", authorizationURL.String())
 	return requestToken, err
 }
 
-func receivePIN(requestToken *oauth1.RequestToken) (*oauth1.Token, error) {
+func receivePIN(requestToken string) (*oauth1.Token, error) {
 	fmt.Printf("Paste your PIN here: ")
 	var verifier string
 	_, err := fmt.Scanf("%s", &verifier)
 	if err != nil {
 		return nil, err
 	}
-	return config.GetAccessToken(requestToken, verifier)
+	// Twitter ignores the oauth_signature on the access token request. The user
+	// to which the request (temporary) token corresponds is already known on the
+	// server. The request for a request token earlier was validated signed by
+	// the consumer. Consumer applications can avoid keeping request token state
+	// between authorization granting and callback handling.
+	accessToken, accessSecret, err := config.AccessToken(requestToken, "secret does not matter", verifier)
+	if err != nil {
+		return nil, err
+	}
+	return oauth1.NewToken(accessToken, accessSecret), err
 }

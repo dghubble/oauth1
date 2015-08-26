@@ -75,8 +75,7 @@ func TestTwitterAccessTokenAuthHeader(t *testing.T) {
 	signer := &Signer{config, &fixedClock{time.Unix(unixTimestamp, 0)}, &fixedNoncer{expectedNonce}}
 	req, err := http.NewRequest("POST", config.Endpoint.AccessTokenURL, nil)
 	assert.Nil(t, err)
-	requestToken := &RequestToken{expectedRequestToken, requestTokenSecret}
-	err = signer.SetAccessTokenAuthHeader(req, requestToken, expectedVerifier)
+	err = signer.SetAccessTokenAuthHeader(req, expectedRequestToken, requestTokenSecret, expectedVerifier)
 	// assert the request for an access token is signed and has an oauth_token and verifier
 	assert.Nil(t, err)
 	params := parseOAuthParamsOrFail(t, req.Header.Get(authorizationHeaderParam))

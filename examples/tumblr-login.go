@@ -28,11 +28,11 @@ func main() {
 		Endpoint:    tumblr.Endpoint,
 	}
 
-	requestToken, err := login()
+	requestToken, requestSecret, err := login()
 	if err != nil {
 		log.Fatalf("Request Token Phase: %s", err.Error())
 	}
-	accessToken, err := receivePIN(requestToken)
+	accessToken, err := receivePIN(requestToken, requestSecret)
 	if err != nil {
 		log.Fatalf("Access Token Phase: %s", err.Error())
 	}
@@ -41,27 +41,28 @@ func main() {
 	fmt.Printf("token: %s\nsecret: %s\n", accessToken.Token, accessToken.TokenSecret)
 }
 
-func login() (*oauth1.RequestToken, error) {
-	requestToken, err := config.GetRequestToken()
+func login() (requestToken, requestSecret string, err error) {
+	requestToken, requestSecret, err = config.RequestToken()
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 	authorizationURL, err := config.AuthorizationURL(requestToken)
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 	fmt.Printf("Open this URL in your browser:\n%s\n", authorizationURL.String())
-	return requestToken, err
+	return requestToken, requestSecret, err
 }
 
-func receivePIN(requestToken *oauth1.RequestToken) (*oauth1.Token, error) {
+func receivePIN(requestToken, requestSecret string) (*oauth1.Token, error) {
 	fmt.Printf("Choose whether to grant the application access.\nPaste " +
 		"the oauth_verifier parameter (excluding trailing #_=_) from the " +
 		"address bar: ")
 	var verifier string
 	_, err := fmt.Scanf("%s", &verifier)
+	accessToken, accessSecret, err := config.AccessToken(requestToken, requestSecret, verifier)
 	if err != nil {
 		return nil, err
 	}
-	return config.GetAccessToken(requestToken, verifier)
+	return oauth1.NewToken(accessToken, accessSecret), err
 }

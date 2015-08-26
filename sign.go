@@ -59,16 +59,16 @@ func (s *Signer) SetRequestTokenAuthHeader(req *http.Request) error {
 
 // SetAccessTokenAuthHeader sets the OAuth1 header for the access token request
 // (token credential) according to RFC 5849 2.3.
-func (s *Signer) SetAccessTokenAuthHeader(req *http.Request, requestToken *RequestToken, verifier string) error {
+func (s *Signer) SetAccessTokenAuthHeader(req *http.Request, requestToken, requestSecret, verifier string) error {
 	oauthParams := s.commonOAuthParams()
-	oauthParams[oauthTokenParam] = requestToken.Token
+	oauthParams[oauthTokenParam] = requestToken
 	oauthParams[oauthVerifierParam] = verifier
 	params, err := collectParameters(req, oauthParams)
 	if err != nil {
 		return err
 	}
 	signatureBase := signatureBase(req, params)
-	signature := signature(s.config.ConsumerSecret, requestToken.TokenSecret, signatureBase)
+	signature := signature(s.config.ConsumerSecret, requestSecret, signatureBase)
 	oauthParams[oauthSignatureParam] = signature
 	setAuthorizationHeader(req, authHeaderValue(oauthParams))
 	return nil
