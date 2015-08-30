@@ -69,8 +69,10 @@ An OAuth1 `Token` is an access token which allows requests to be made as a parti
 
 If you've used [golang.org/x/oauth2](https://godoc.org/golang.org/x/oauth2) before, this organization is similar.
 
+## Contributing
+
+See the [Contributing Guide](https://gist.github.com/dghubble/be682c123727f70bcfe7).
+
 ## License
 
 [MIT License](LICENSE)
-
-
