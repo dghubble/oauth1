@@ -81,7 +81,7 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	requestToken = values.Get(oauthTokenParam)
 	requestSecret = values.Get(oauthTokenSecretParam)
 	if requestToken == "" || requestSecret == "" {
-		return "", "", errors.New("RequestToken response missing oauth token or secret")
+		return "", "", errors.New("Response missing oauth token or secret")
 	}
 	return requestToken, requestSecret, nil
 }
@@ -150,7 +150,7 @@ func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (acce
 	accessToken = values.Get(oauthTokenParam)
 	accessSecret = values.Get(oauthTokenSecretParam)
 	if accessToken == "" || accessSecret == "" {
-		return "", "", errors.New("AccessToken response missing access token or secret")
+		return "", "", errors.New("Response missing oauth token or secret")
 	}
 	return accessToken, accessSecret, nil
 }

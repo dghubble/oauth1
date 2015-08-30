@@ -11,7 +11,7 @@ import (
 
 func TestTransport(t *testing.T) {
 	const (
-		expectedToken       = "some_token"
+		expectedToken       = "access_token"
 		expectedConsumerKey = "consumer_key"
 		expectedNonce       = "some_nonce"
 		expectedTimestamp   = "123456789"
