@@ -36,8 +36,8 @@ func TestNewClient(t *testing.T) {
 	client.Get(server.URL)
 }
 
-// newRequestTokenServer returns a new mock httptest.Server for an OAuth1
-// provider request token endpoint.
+// newRequestTokenServer returns a new httptest.Server for an OAuth1 provider
+// request token endpoint.
 func newRequestTokenServer(t *testing.T, data url.Values) *httptest.Server {
 	return newMockServer(func(w http.ResponseWriter, req *http.Request) {
 		assert.Equal(t, "POST", req.Method)
@@ -47,8 +47,8 @@ func newRequestTokenServer(t *testing.T, data url.Values) *httptest.Server {
 	})
 }
 
-// newAccessTokenServer returns a new mock httptest.Server for an OAuth1
-// provider access token endpoint.
+// newAccessTokenServer returns a new httptest.Server for an OAuth1 provider
+// access token endpoint.
 func newAccessTokenServer(t *testing.T, data url.Values) *httptest.Server {
 	return newMockServer(func(w http.ResponseWriter, req *http.Request) {
 		assert.Equal(t, "POST", req.Method)
@@ -57,6 +57,16 @@ func newAccessTokenServer(t *testing.T, data url.Values) *httptest.Server {
 		assert.Equal(t, expectedVerifier, params[oauthVerifierParam])
 		w.Header().Set(contentType, formContentType)
 		w.Write([]byte(data.Encode()))
+	})
+}
+
+// newUnparseableBodyServer returns a new httptest.Server which writes
+// responses with bodies that error when parsed by url.ParseQuery.
+func newUnparseableBodyServer() *httptest.Server {
+	return newMockServer(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set(contentType, formContentType)
+		// url.ParseQuery will error, https://golang.org/src/net/url/url_test.go#L1107
+		w.Write([]byte("%gh&%ij"))
 	})
 }
 
@@ -112,6 +122,23 @@ func TestConfigRequestToken_CallbackNotConfirmed(t *testing.T) {
 	assert.Equal(t, "", requestSecret)
 }
 
+func TestConfigRequestToken_CannotParseBody(t *testing.T) {
+	server := newUnparseableBodyServer()
+	defer server.Close()
+
+	config := &Config{
+		Endpoint: Endpoint{
+			RequestTokenURL: server.URL,
+		},
+	}
+	requestToken, requestSecret, err := config.RequestToken()
+	if assert.Error(t, err) {
+		assert.Contains(t, err.Error(), "invalid URL escape")
+	}
+	assert.Equal(t, "", requestToken)
+	assert.Equal(t, "", requestSecret)
+}
+
 func TestConfigRequestToken_MissingTokenOrSecret(t *testing.T) {
 	data := url.Values{}
 	data.Add("oauth_token", "any_token")
@@ -126,7 +153,7 @@ func TestConfigRequestToken_MissingTokenOrSecret(t *testing.T) {
 	}
 	requestToken, requestSecret, err := config.RequestToken()
 	if assert.Error(t, err) {
-		assert.Equal(t, "Response missing oauth token or secret", err.Error())
+		assert.Equal(t, "Response missing oauth_token or oauth_token_secret", err.Error())
 	}
 	assert.Equal(t, "", requestToken)
 	assert.Equal(t, "", requestSecret)
@@ -181,6 +208,35 @@ func TestConfigAccessToken(t *testing.T) {
 	assert.Equal(t, expectedSecret, accessSecret)
 }
 
+func TestConfigAccessToken_InvalidAccessTokenURL(t *testing.T) {
+	config := &Config{
+		Endpoint: Endpoint{
+			AccessTokenURL: "http://wrong.com/oauth/access_token",
+		},
+	}
+	accessToken, accessSecret, err := config.AccessToken("any_token", "any_secret", "any_verifier")
+	assert.NotNil(t, err)
+	assert.Equal(t, "", accessToken)
+	assert.Equal(t, "", accessSecret)
+}
+
+func TestConfigAccessToken_CannotParseBody(t *testing.T) {
+	server := newUnparseableBodyServer()
+	defer server.Close()
+
+	config := &Config{
+		Endpoint: Endpoint{
+			AccessTokenURL: server.URL,
+		},
+	}
+	accessToken, accessSecret, err := config.AccessToken("any_token", "any_secret", "any_verifier")
+	if assert.Error(t, err) {
+		assert.Contains(t, err.Error(), "invalid URL escape")
+	}
+	assert.Equal(t, "", accessToken)
+	assert.Equal(t, "", accessSecret)
+}
+
 func TestConfigAccessToken_MissingTokenOrSecret(t *testing.T) {
 	data := url.Values{}
 	data.Add("oauth_token", "any_token")
@@ -194,8 +250,74 @@ func TestConfigAccessToken_MissingTokenOrSecret(t *testing.T) {
 	}
 	accessToken, accessSecret, err := config.AccessToken("request_token", "request_secret", expectedVerifier)
 	if assert.Error(t, err) {
-		assert.Equal(t, "Response missing oauth token or secret", err.Error())
+		assert.Equal(t, "Response missing oauth_token or oauth_token_secret", err.Error())
 	}
 	assert.Equal(t, "", accessToken)
 	assert.Equal(t, "", accessSecret)
+}
+
+func TestParseAuthorizationCallback_GET(t *testing.T) {
+	expectedToken := "token"
+	expectedVerifier := "verifier"
+	server := newMockServer(func(w http.ResponseWriter, req *http.Request) {
+		assert.Equal(t, "GET", req.Method)
+		// logic under test
+		requestToken, verifier, err := ParseAuthorizationCallback(req)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedToken, requestToken)
+		assert.Equal(t, expectedVerifier, verifier)
+	})
+	defer server.Close()
+
+	// OAuth1 provider calls callback url
+	url, err := url.Parse(server.URL)
+	assert.Nil(t, err)
+	query := url.Query()
+	query.Add("oauth_token", expectedToken)
+	query.Add("oauth_verifier", expectedVerifier)
+	url.RawQuery = query.Encode()
+	http.Get(url.String())
+}
+
+func TestParseAuthorizationCallback_POST(t *testing.T) {
+	expectedToken := "token"
+	expectedVerifier := "verifier"
+	server := newMockServer(func(w http.ResponseWriter, req *http.Request) {
+		assert.Equal(t, "POST", req.Method)
+		// logic under test
+		requestToken, verifier, err := ParseAuthorizationCallback(req)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedToken, requestToken)
+		assert.Equal(t, expectedVerifier, verifier)
+	})
+	defer server.Close()
+
+	// OAuth1 provider calls callback url
+	form := url.Values{}
+	form.Add("oauth_token", expectedToken)
+	form.Add("oauth_verifier", expectedVerifier)
+	http.PostForm(server.URL, form)
+}
+
+func TestParseAuthorizationCallback_MissingTokenOrVerifier(t *testing.T) {
+	server := newMockServer(func(w http.ResponseWriter, req *http.Request) {
+		assert.Equal(t, "GET", req.Method)
+		// logic under test
+		requestToken, verifier, err := ParseAuthorizationCallback(req)
+		if assert.Error(t, err) {
+			assert.Equal(t, "Request missing oauth_token or oauth_verifier", err.Error())
+		}
+		assert.Equal(t, "", requestToken)
+		assert.Equal(t, "", verifier)
+	})
+	defer server.Close()
+
+	// OAuth1 provider calls callback url
+	url, err := url.Parse(server.URL)
+	assert.Nil(t, err)
+	query := url.Query()
+	query.Add("oauth_token", "any_token")
+	query.Add("oauth_verifier", "") // missing oauth_verifier
+	url.RawQuery = query.Encode()
+	http.Get(url.String())
 }

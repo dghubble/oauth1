@@ -81,7 +81,7 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	requestToken = values.Get(oauthTokenParam)
 	requestSecret = values.Get(oauthTokenSecretParam)
 	if requestToken == "" || requestSecret == "" {
-		return "", "", errors.New("Response missing oauth token or secret")
+		return "", "", errors.New("Response missing oauth_token or oauth_token_secret")
 	}
 	return requestToken, requestSecret, nil
 }
@@ -101,12 +101,12 @@ func (c *Config) AuthorizationURL(requestToken string) (*url.URL, error) {
 	return authorizationURL, nil
 }
 
-// HandleAuthorizationCallback handles an OAuth1 authorization callback GET
-// http.Request from a provider server. The oauth_token and oauth_verifier
-// query parameters are parsed to return the request token from earlier in the
-// flow and the verifier string.
+// ParseAuthorizationCallback parses an OAuth1 authorization callback request
+// from a provider server. The oauth_token and oauth_verifier parameters are
+// parsed to return the request token from earlier in the flow and the
+// verifier string.
 // See RFC 5849 2.2 Resource Owner Authorization.
-func (c *Config) HandleAuthorizationCallback(req *http.Request) (requestToken, verifier string, err error) {
+func ParseAuthorizationCallback(req *http.Request) (requestToken, verifier string, err error) {
 	// parse the raw query from the URL into req.Form
 	err = req.ParseForm()
 	if err != nil {
@@ -115,7 +115,7 @@ func (c *Config) HandleAuthorizationCallback(req *http.Request) (requestToken, v
 	requestToken = req.Form.Get(oauthTokenParam)
 	verifier = req.Form.Get(oauthVerifierParam)
 	if requestToken == "" || verifier == "" {
-		return "", "", errors.New("callback did not receive an oauth_token or oauth_verifier")
+		return "", "", errors.New("Request missing oauth_token or oauth_verifier")
 	}
 	return requestToken, verifier, nil
 }
@@ -150,7 +150,7 @@ func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (acce
 	accessToken = values.Get(oauthTokenParam)
 	accessSecret = values.Get(oauthTokenSecretParam)
 	if accessToken == "" || accessSecret == "" {
-		return "", "", errors.New("Response missing oauth token or secret")
+		return "", "", errors.New("Response missing oauth_token or oauth_token_secret")
 	}
 	return accessToken, accessSecret, nil
 }

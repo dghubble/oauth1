@@ -2,8 +2,9 @@
 
 ## latest (TBD)
 
-* Improvements to OAuth 1 spec compliance and test coverage.
+* Improved OAuth 1 spec compliance and test coverage.
 * Added `func StaticTokenSource(*Token) TokenSource`
+* Added `ParseAuthorizationCallback` function. Removed `Config.HandleAuthorizationCallback` method.
 * Changed `Config` method signatures to allow an interface to be defined for the OAuth1 authorization flow. Gives users of this package (and downstream packages) the freedom to use other implementations if they wish.
 * Removed `RequestToken` in favor of passing token and secret value strings.
 * Removed `ReuseTokenSource` struct, it was effectively a static source. Replaced by `StaticTokenSource`. (breaking)
