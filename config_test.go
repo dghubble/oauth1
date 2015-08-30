@@ -176,14 +176,14 @@ func TestAuthorizationURL(t *testing.T) {
 func TestAuthorizationURL_CannotParseAuthorizeURL(t *testing.T) {
 	config := &Config{
 		Endpoint: Endpoint{
-			AuthorizeURL: "http://[::1]invalid",
+			AuthorizeURL: "%gh&%ij",
 		},
 	}
 	url, err := config.AuthorizationURL("any_request_token")
 	assert.Nil(t, url)
 	if assert.Error(t, err) {
 		assert.Contains(t, err.Error(), "parse")
-		assert.Contains(t, err.Error(), "invalid port")
+		assert.Contains(t, err.Error(), "invalid URL")
 	}
 }
 
