@@ -1,6 +1,6 @@
 # OAuth1 Changelog
 
-## latest (TBD)
+## v.1.0.0-rc1 (2015-08-30)
 
 * Improved OAuth 1 spec compliance and test coverage.
 * Added `func StaticTokenSource(*Token) TokenSource`

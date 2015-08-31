@@ -1,46 +1,62 @@
 /*
-Package oauth1 is a Go implementation of the OAuth1 spec.
+Package oauth1 is a Go implementation of the OAuth1 spec RFC 5849.
 
-Components
+It allows end-users to authorize a client (consumer) to access protected
+resources on their behalf (e.g. login) and allows clients to make signed and
+authorized requests on behalf of a user (e.g. API calls).
 
-An Endpoint groups an OAuth provider's URLs for getting a request token,
-allowing users to authorize applications, and getting access tokens. Endpoints
-for common providers like Twitter and Dropbox are provided in subpackages.
-
-A Config stores a consumer application's consumer key and secret, the
-callback URL, and the Endpoint to which the consumer is registered. It
-provides OAuth 1 authorization flow methods and a Client(token *Token)
-method which returns an http.Client which will transparently authorize
-requests.
-
-An OAuth1 Token is an access token which allows requests to be made as a
-particular user. It has fields Token and TokenSecret. If you already have
-an access token, skip to Authorized Requests.
-
-If you've used https://godoc.org/golang.org/x/oauth2 before, this organization
-is similar.
+It takes design cues from golang.org/x/oauth2, providing an http.Client which
+handles request signing and authorization.
 
 Authorization Flow
 
-The OAuth 1 authorization flow to request that a user grant an application
-access to his/her account (via an access token) typically looks like:
+Perform the OAuth 1 authorization flow to ask a user to grant an application
+access to his/her resources via an access token.
 
-	* User visits Consumer's "/login" route (via "Login with Provider"
-	button)
-	* Login handler calls config.GetRequestToken()
-	* Login handler redirects user to config.AuthorizationURL(rt *RequestToken)
-	* Provider calls Consumer's CallbackURL with a verifier
-	* config.GetAccessToken(rt *RequestToken, verifier string)
-	* Consumer application stores access token. Optionally creates some form of
-	unforgeable session state.
+	import (
+		"github.com/dghubble/oauth1"
+		"github.com/dghubble/oauth1/twitter""
+	)
+	...
 
-For more details, see the Twitter PIN-based login example or the
-https://github.com/dghubble/go-twitter login package.
+	config := oauth1.Config{
+		ConsumerKey:    "consumerKey",
+		ConsumerSecret: "consumerSecret",
+		CallbackURL:    "http://mysite.com/oauth/twitter/callback",
+		Endpoint:       twitter.AuthorizeEndpoint,
+	}
+
+1. When a user performs an action (e.g. "Login with X" button calls "/login"
+route) get an OAuth1 request token (temporary credentials).
+
+	requestToken, requestSecret, err = config.RequestToken()
+	// handle err
+
+2. Obtain authorization from the user by redirecting them to the OAuth1
+provider's authorization URL to grant the application access.
+
+	authorizationURL, err := config.AuthorizationURL(requestToken)
+	// handle err
+	http.Redirect(w, req, authorizationURL.String(), htt.StatusFound)
+
+Receive the callback from the OAuth1 provider in a handler.
+
+	requestToken, verifier, err := oauth1.ParseAuthorizationCallback(req)
+	// handle err
+
+3. Acquire the access token (token credentials) which can later be used
+to make requests on behalf of the user.
+
+	accessToken, accessSecret, err := config.AccessToken(requestToken, requestSecret, verifier)
+	// handle error
+	token := NewToken(accessToken, accessSecret)
+
+Check the examples to see this authorization flow in action from the command
+line, with Twitter PIN-based login and Tumblr login.
 
 Authorized Requests
 
-After an access Token has been obtained, authorized requests can be made on
-behalf of the user.
+Use an access Token to make authorized requests on behalf of a user.
 
 	import (
 		"github.com/dghubble/oauth1"
@@ -61,6 +77,16 @@ behalf of the user.
 	    fmt.Printf("Raw Response Body:\n%v\n", string(body))
 	}
 
-See more request examples in the examples subpackage.
+Check the examples to see Twitter and Tumblr requests in action.
+
+Higher Level Packages
+
+To implement "Login with X", you may wish to use the https://github.com/dghubble/gologin
+packages which provide login handlers for OAuth1 and OAuth2 providers.
+
+To make requests to Twitter or Tumblr, you may wish to use the
+https://github.com/dghubble/go-twitter and https://github.com/benfb/go-tumblr
+Go API clients.
+
 */
 package oauth1
