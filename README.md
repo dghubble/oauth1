@@ -51,7 +51,7 @@ config := oauth1.Config{
 
     Receive the callback from the OAuth1 provider in a handler.
 
-    ```
+    ```go
     requestToken, verifier, err := oauth1.ParseAuthorizationCallback(req)
     // handle err
     ```
