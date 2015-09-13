@@ -49,6 +49,21 @@ func TestTransport(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestTransport_defaultBaseTransport(t *testing.T) {
+	tr := &Transport{
+		Base: nil,
+	}
+	assert.Equal(t, http.DefaultTransport, tr.base())
+}
+
+func TestTransport_customBaseTransport(t *testing.T) {
+	expected := &http.Transport{}
+	tr := &Transport{
+		Base: expected,
+	}
+	assert.Equal(t, expected, tr.base())
+}
+
 func TestTransport_nilSource(t *testing.T) {
 	tr := &Transport{
 		source: nil,

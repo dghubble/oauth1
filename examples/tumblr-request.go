@@ -23,7 +23,7 @@ func main() {
 	token := oauth1.NewToken(accessToken, accessTokenSecret)
 
 	// httpClient will automatically authorize http.Request's
-	httpClient := config.Client(token)
+	httpClient := config.Client(oauth1.NoContext, token)
 
 	// get information about the current authenticated user
 	path := "https://api.tumblr.com/v2/user/info"

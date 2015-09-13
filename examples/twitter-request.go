@@ -24,7 +24,7 @@ func main() {
 	token := oauth1.NewToken(accessToken, accessTokenSecret)
 
 	// httpClient will automatically authorize http.Request's
-	httpClient := config.Client(token)
+	httpClient := config.Client(oauth1.NoContext, token)
 
 	path := "https://api.twitter.com/1.1/statuses/home_timeline.json?count=2"
 	resp, _ := httpClient.Get(path)

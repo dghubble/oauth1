@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"golang.org/x/net/context"
 )
 
 const (
@@ -33,14 +35,15 @@ func NewConfig(consumerKey, consumerSecret string) *Config {
 	}
 }
 
-// Client returns an HTTP client which uses the provided access Token.
-func (c *Config) Client(t *Token) *http.Client {
-	return NewClient(c, t)
+// Client returns an HTTP client which uses the provided ctx and access Token.
+func (c *Config) Client(ctx context.Context, t *Token) *http.Client {
+	return NewClient(ctx, c, t)
 }
 
 // NewClient returns a new http Client which signs requests via OAuth1.
-func NewClient(config *Config, token *Token) *http.Client {
+func NewClient(ctx context.Context, config *Config, token *Token) *http.Client {
 	transport := &Transport{
+		Base:   contextTransport(ctx),
 		source: StaticTokenSource(token),
 		signer: &Signer{config: config, clock: newRealClock()},
 	}

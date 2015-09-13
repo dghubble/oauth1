@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 const expectedVerifier = "some_verifier"
@@ -24,7 +25,7 @@ func TestNewClient(t *testing.T) {
 	expectedConsumerKey := "consumer_key"
 	config := NewConfig(expectedConsumerKey, "consumer_secret")
 	token := NewToken(expectedToken, "access_secret")
-	client := config.Client(token)
+	client := config.Client(NoContext, token)
 
 	server := newMockServer(func(w http.ResponseWriter, req *http.Request) {
 		assert.Equal(t, "GET", req.Method)
@@ -34,6 +35,25 @@ func TestNewClient(t *testing.T) {
 	})
 	defer server.Close()
 	client.Get(server.URL)
+}
+
+func TestNewClient_DefaultTransport(t *testing.T) {
+	client := NewClient(NoContext, NewConfig("t", "s"), NewToken("t", "s"))
+	// assert that the client uses the DefaultTransport
+	transport, ok := client.Transport.(*Transport)
+	assert.True(t, ok)
+	assert.Equal(t, http.DefaultTransport, transport.base())
+}
+
+func TestNewClient_ContextClientTransport(t *testing.T) {
+	baseTransport := &http.Transport{}
+	baseClient := &http.Client{Transport: baseTransport}
+	ctx := context.WithValue(NoContext, HTTPClient, baseClient)
+	client := NewClient(ctx, NewConfig("t", "s"), NewToken("t", "s"))
+	// assert that the client uses the ctx client's Transport as its base RoundTripper
+	transport, ok := client.Transport.(*Transport)
+	assert.True(t, ok)
+	assert.Equal(t, baseTransport, transport.base())
 }
 
 // newRequestTokenServer returns a new httptest.Server for an OAuth1 provider

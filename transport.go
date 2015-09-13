@@ -6,12 +6,15 @@ import (
 )
 
 // Transport is an http.RoundTripper which makes OAuth1 HTTP requests. It
-// wraps a default RoundTripper and adds an Authorization header using an
+// wraps a base RoundTripper and adds an Authorization header using an
 // OAuth1 signer and TokenSource.
 //
 // Transport is a low-level component, most users should use Config to create
 // an http.Client instead.
 type Transport struct {
+	// Base is the base RoundTripper used to make HTTP requests. If nil, then
+	// http.DefaultTransport is used
+	Base http.RoundTripper
 	// source supplies the token to use when signing a request
 	source TokenSource
 	// signer is a configured OAuth 1 Signer
@@ -37,7 +40,14 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return http.DefaultTransport.RoundTrip(req2)
+	return t.base().RoundTrip(req2)
+}
+
+func (t *Transport) base() http.RoundTripper {
+	if t.Base != nil {
+		return t.Base
+	}
+	return http.DefaultTransport
 }
 
 // cloneRequest returns a clone of the given *http.Request with a shallow

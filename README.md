@@ -80,7 +80,7 @@ func main() {
     token := oauth1.NewToken("token", "tokenSecret")
 
     // httpClient will automatically authorize http.Request's
-    httpClient := config.Client(token)
+    httpClient := config.Client(oauth1.NoContext, token)
 
     // example Twitter API request
     path := "https://api.twitter.com/1.1/statuses/home_timeline.json?count=2"
