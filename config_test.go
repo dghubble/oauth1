@@ -91,8 +91,8 @@ func newUnparseableBodyServer() *httptest.Server {
 }
 
 func TestConfigRequestToken(t *testing.T) {
-	expectedToken := "token"
-	expectedSecret := "secret"
+	expectedToken := "reqest_token"
+	expectedSecret := "request_secret"
 	data := url.Values{}
 	data.Add("oauth_token", expectedToken)
 	data.Add("oauth_token_secret", expectedSecret)
@@ -136,7 +136,7 @@ func TestConfigRequestToken_CallbackNotConfirmed(t *testing.T) {
 	}
 	requestToken, requestSecret, err := config.RequestToken()
 	if assert.Error(t, err) {
-		assert.Equal(t, "oauth_callback_confirmed was not true", err.Error())
+		assert.Equal(t, "oauth1: oauth_callback_confirmed was not true", err.Error())
 	}
 	assert.Equal(t, "", requestToken)
 	assert.Equal(t, "", requestSecret)
@@ -173,7 +173,7 @@ func TestConfigRequestToken_MissingTokenOrSecret(t *testing.T) {
 	}
 	requestToken, requestSecret, err := config.RequestToken()
 	if assert.Error(t, err) {
-		assert.Equal(t, "Response missing oauth_token or oauth_token_secret", err.Error())
+		assert.Equal(t, "oauth1: Response missing oauth_token or oauth_token_secret", err.Error())
 	}
 	assert.Equal(t, "", requestToken)
 	assert.Equal(t, "", requestSecret)
@@ -208,12 +208,11 @@ func TestAuthorizationURL_CannotParseAuthorizeURL(t *testing.T) {
 }
 
 func TestConfigAccessToken(t *testing.T) {
-	expectedToken := "token"
-	expectedSecret := "secret"
+	expectedToken := "access_token"
+	expectedSecret := "access_secret"
 	data := url.Values{}
 	data.Add("oauth_token", expectedToken)
 	data.Add("oauth_token_secret", expectedSecret)
-	data.Add("oauth_callback_confirmed", "true")
 	server := newAccessTokenServer(t, data)
 	defer server.Close()
 
@@ -270,7 +269,7 @@ func TestConfigAccessToken_MissingTokenOrSecret(t *testing.T) {
 	}
 	accessToken, accessSecret, err := config.AccessToken("request_token", "request_secret", expectedVerifier)
 	if assert.Error(t, err) {
-		assert.Equal(t, "Response missing oauth_token or oauth_token_secret", err.Error())
+		assert.Equal(t, "oauth1: Response missing oauth_token or oauth_token_secret", err.Error())
 	}
 	assert.Equal(t, "", accessToken)
 	assert.Equal(t, "", accessSecret)
@@ -325,7 +324,7 @@ func TestParseAuthorizationCallback_MissingTokenOrVerifier(t *testing.T) {
 		// logic under test
 		requestToken, verifier, err := ParseAuthorizationCallback(req)
 		if assert.Error(t, err) {
-			assert.Equal(t, "Request missing oauth_token or oauth_verifier", err.Error())
+			assert.Equal(t, "oauth1: Request missing oauth_token or oauth_verifier", err.Error())
 		}
 		assert.Equal(t, "", requestToken)
 		assert.Equal(t, "", verifier)
