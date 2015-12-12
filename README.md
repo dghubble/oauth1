@@ -1,19 +1,32 @@
 
 # OAuth1 [![Build Status](https://travis-ci.org/dghubble/oauth1.png)](https://travis-ci.org/dghubble/oauth1) [![Coverage](http://gocover.io/_badge/github.com/dghubble/oauth1)](http://gocover.io/github.com/dghubble/oauth1) [![GoDoc](http://godoc.org/github.com/dghubble/oauth1?status.png)](http://godoc.org/github.com/dghubble/oauth1)
+<img align="right" src="https://storage.googleapis.com/dghubble/oauth1.png">
 
 OAauth1 is a Go implementation of the [OAuth 1 spec](https://tools.ietf.org/html/rfc5849).
 
-It allows end-users to authorize a client (consumer) to access protected resources on their behalf (e.g. login) and allows clients to make signed and authorized requests on behalf of a user (e.g. API calls).
+It allows end-users to authorize a client (consumer) to access protected resources on his/her behalf and to make signed and authorized requests.
 
-It takes design cues from [golang.org/x/oauth2](https://godoc.org/golang.org/x/oauth2), providing an `http.Client` which handles request signing and authorization.
+Package `oauth1` takes design cues from [golang.org/x/oauth2](https://godoc.org/golang.org/x/oauth2), to provide an analogous API and an `http.Client` with a Transport which signs/authorizes requests.
 
 ## Install
 
     go get github.com/dghubble/oauth1
 
-## Documentation
+## Docs
 
 Read [GoDoc](https://godoc.org/github.com/dghubble/oauth1)
+
+## Usage
+
+Package `oauth1` implements the OAuth1 authorization flow and provides an `http.Client` which can sign and authorize OAuth1 requests.
+
+To implement "Login with X", use the [gologin](https://github.com/dghubble/gologin) packages which provide login handlers for OAuth1 and OAuth2 providers.
+
+To call the Twitter, Digits, or Tumblr OAuth1 APIs, use the higher level Go API clients.
+
+* [Twitter](https://github.com/dghubble/go-twitter)
+* [Digits](https://github.com/dghubble/go-digits)
+* [Tumblr](https://github.com/benfb/go-tumblr)
 
 ### Authorization Flow
 
@@ -93,24 +106,15 @@ func main() {
 
 Check the [examples](examples) to see Twitter and Tumblr requests in action.
 
-## Higher Level Packages
+### Concepts
 
-To implement "Login with X", you may wish to use the [gologin](https://github.com/dghubble/gologin) packages which provide login handlers for OAuth1 and OAuth2 providers.
+An `Endpoint` groups an OAuth provider's token and authorization URL endpoints.Endpoints for common providers are provided in subpackages.
 
-To make requests, you may wish to use the Twitter and Tumblr Go API clients.
+A `Config` stores a consumer application's consumer key and secret, the registered callback URL, and the `Endpoint` to which the consumer is registered. It provides OAuth1 authorization flow methods.
 
-* [github.com/dghubble/go-twitter](https://github.com/dghubble/go-twitter)
-* [github.com/benfb/go-tumblr](https://github.com/benfb/go-tumblr)
+An OAuth1 `Token` is an access token which can be used to make signed requests on behalf of a user. See [Authorized Requests](#Authorized Requests) for details.
 
-### Components
-
-An `Endpoint` groups an OAuth provider's token and authorization URLs.Endpoints for common providers are provided in subpackages.
-
-A `Config` stores a consumer application's consumer key and secret, the callback URL, and the Endpoint to which the consumer is registered. It provides OAuth1 authorization flow methods.
-
-An OAuth1 `Token` is an access token which allows requests to be made as a particular user. See [Authorized Requests](#Authorized Requests) for details.
-
-If you've used [golang.org/x/oauth2](https://godoc.org/golang.org/x/oauth2) before, this organization is similar.
+If you've used the [golang.org/x/oauth2](https://godoc.org/golang.org/x/oauth2) package for OAuth2 before, this organization should be familiar.
 
 ## Contributing
 

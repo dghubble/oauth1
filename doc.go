@@ -8,6 +8,21 @@ authorized requests on behalf of a user (e.g. API calls).
 It takes design cues from golang.org/x/oauth2, providing an http.Client which
 handles request signing and authorization.
 
+Usage
+
+Package oauth1 implements the OAuth1 authorization flow and provides an
+http.Client which can sign and authorize OAuth1 requests.
+
+To implement "Login with X", use the https://github.com/dghubble/gologin
+packages which provide login handlers for OAuth1 and OAuth2 providers.
+
+To call the Twitter, Digits, or Tumblr OAuth1 APIs, use the higher level Go API
+clients.
+
+* https://github.com/dghubble/go-twitter
+* https://github.com/dghubble/go-digits
+* https://github.com/benfb/go-tumblr
+
 Authorization Flow
 
 Perform the OAuth 1 authorization flow to ask a user to grant an application
@@ -78,15 +93,5 @@ Use an access Token to make authorized requests on behalf of a user.
 	}
 
 Check the examples to see Twitter and Tumblr requests in action.
-
-Higher Level Packages
-
-To implement "Login with X", you may wish to use the https://github.com/dghubble/gologin
-packages which provide login handlers for OAuth1 and OAuth2 providers.
-
-To make requests to Twitter or Tumblr, you may wish to use the
-https://github.com/dghubble/go-twitter and https://github.com/benfb/go-tumblr
-Go API clients.
-
 */
 package oauth1
