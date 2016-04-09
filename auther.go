@@ -2,9 +2,7 @@ package oauth1
 
 import (
 	"bytes"
-	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -28,7 +26,6 @@ const (
 	oauthVersionParam         = "oauth_version"
 	oauthCallbackParam        = "oauth_callback"
 	oauthVerifierParam        = "oauth_verifier"
-	defaultSignatureMethod    = "HMAC-SHA1"
 	defaultOauthVersion       = "1.0"
 	contentType               = "Content-Type"
 	formContentType           = "application/x-www-form-urlencoded"
@@ -45,8 +42,7 @@ type noncer interface {
 	Nonce() string
 }
 
-// auther adds an "OAuth" Authorization header field to requests based on the
-// OAuth1 Config.
+// auther adds an "OAuth" Authorization header field to requests.
 type auther struct {
 	config *Config
 	clock  clock
@@ -61,15 +57,15 @@ func newAuther(config *Config) *auther {
 
 // setRequestTokenAuthHeader adds the OAuth1 header for the request token
 // request (temporary credential) according to RFC 5849 2.1.
-func (s *auther) setRequestTokenAuthHeader(req *http.Request) error {
-	oauthParams := s.commonOAuthParams()
-	oauthParams[oauthCallbackParam] = s.config.CallbackURL
+func (a *auther) setRequestTokenAuthHeader(req *http.Request) error {
+	oauthParams := a.commonOAuthParams()
+	oauthParams[oauthCallbackParam] = a.config.CallbackURL
 	params, err := collectParameters(req, oauthParams)
 	if err != nil {
 		return err
 	}
 	signatureBase := signatureBase(req, params)
-	signature := signature(s.config.ConsumerSecret, "", signatureBase)
+	signature := a.signer().Sign("", signatureBase)
 	oauthParams[oauthSignatureParam] = signature
 	req.Header.Set(authorizationHeaderParam, authHeaderValue(oauthParams))
 	return nil
@@ -77,8 +73,8 @@ func (s *auther) setRequestTokenAuthHeader(req *http.Request) error {
 
 // setAccessTokenAuthHeader sets the OAuth1 header for the access token request
 // (token credential) according to RFC 5849 2.3.
-func (s *auther) setAccessTokenAuthHeader(req *http.Request, requestToken, requestSecret, verifier string) error {
-	oauthParams := s.commonOAuthParams()
+func (a *auther) setAccessTokenAuthHeader(req *http.Request, requestToken, requestSecret, verifier string) error {
+	oauthParams := a.commonOAuthParams()
 	oauthParams[oauthTokenParam] = requestToken
 	oauthParams[oauthVerifierParam] = verifier
 	params, err := collectParameters(req, oauthParams)
@@ -86,7 +82,7 @@ func (s *auther) setAccessTokenAuthHeader(req *http.Request, requestToken, reque
 		return err
 	}
 	signatureBase := signatureBase(req, params)
-	signature := signature(s.config.ConsumerSecret, requestSecret, signatureBase)
+	signature := a.signer().Sign(requestSecret, signatureBase)
 	oauthParams[oauthSignatureParam] = signature
 	req.Header.Set(authorizationHeaderParam, authHeaderValue(oauthParams))
 	return nil
@@ -94,15 +90,15 @@ func (s *auther) setAccessTokenAuthHeader(req *http.Request, requestToken, reque
 
 // setRequestAuthHeader sets the OAuth1 header for making authenticated
 // requests with an AccessToken (token credential) according to RFC 5849 3.1.
-func (s *auther) setRequestAuthHeader(req *http.Request, accessToken *Token) error {
-	oauthParams := s.commonOAuthParams()
+func (a *auther) setRequestAuthHeader(req *http.Request, accessToken *Token) error {
+	oauthParams := a.commonOAuthParams()
 	oauthParams[oauthTokenParam] = accessToken.Token
 	params, err := collectParameters(req, oauthParams)
 	if err != nil {
 		return err
 	}
 	signatureBase := signatureBase(req, params)
-	signature := signature(s.config.ConsumerSecret, accessToken.TokenSecret, signatureBase)
+	signature := a.signer().Sign(accessToken.TokenSecret, signatureBase)
 	oauthParams[oauthSignatureParam] = signature
 	req.Header.Set(authorizationHeaderParam, authHeaderValue(oauthParams))
 	return nil
@@ -110,20 +106,20 @@ func (s *auther) setRequestAuthHeader(req *http.Request, accessToken *Token) err
 
 // commonOAuthParams returns a map of the common OAuth1 protocol parameters,
 // excluding the oauth_signature parameter.
-func (s *auther) commonOAuthParams() map[string]string {
+func (a *auther) commonOAuthParams() map[string]string {
 	return map[string]string{
-		oauthConsumerKeyParam:     s.config.ConsumerKey,
-		oauthSignatureMethodParam: defaultSignatureMethod,
-		oauthTimestampParam:       strconv.FormatInt(s.epoch(), 10),
-		oauthNonceParam:           s.nonce(),
+		oauthConsumerKeyParam:     a.config.ConsumerKey,
+		oauthSignatureMethodParam: a.signer().Name(),
+		oauthTimestampParam:       strconv.FormatInt(a.epoch(), 10),
+		oauthNonceParam:           a.nonce(),
 		oauthVersionParam:         defaultOauthVersion,
 	}
 }
 
 // Returns a base64 encoded random 32 byte string.
-func (s *auther) nonce() string {
-	if s.noncer != nil {
-		return s.noncer.Nonce()
+func (a *auther) nonce() string {
+	if a.noncer != nil {
+		return a.noncer.Nonce()
 	}
 	b := make([]byte, 32)
 	rand.Read(b)
@@ -131,11 +127,19 @@ func (s *auther) nonce() string {
 }
 
 // Returns the Unix epoch seconds.
-func (s *auther) epoch() int64 {
-	if s.clock != nil {
-		return s.clock.Now().Unix()
+func (a *auther) epoch() int64 {
+	if a.clock != nil {
+		return a.clock.Now().Unix()
 	}
 	return time.Now().Unix()
+}
+
+// Returns the Config's Signer or the default Signer.
+func (a *auther) signer() Signer {
+	if a.config.Signer != nil {
+		return a.config.Signer
+	}
+	return &HMACSigner{consumerSecret: a.config.ConsumerSecret}
 }
 
 // authHeaderValue formats OAuth parameters according to RFC 5849 3.5.1. OAuth
@@ -249,15 +253,4 @@ func baseURI(req *http.Request) string {
 // and pairs joined with "=" (e.g. foo=bar&q=gopher).
 func normalizedParameterString(params map[string]string) string {
 	return strings.Join(sortParameters(encodeParameters(params)), "&")
-}
-
-// signature creates a signing key from the consumer and token secrets and
-// calculates the HMAC signature bytes of the message using the SHA1 hash.
-// Returns the base64 encoded signature.
-func signature(consumerSecret, tokenSecret, message string) string {
-	signingKey := strings.Join([]string{consumerSecret, tokenSecret}, "&")
-	mac := hmac.New(sha1.New, []byte(signingKey))
-	mac.Write([]byte(message))
-	signatureBytes := mac.Sum(nil)
-	return base64.StdEncoding.EncodeToString(signatureBytes)
 }

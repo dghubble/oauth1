@@ -25,6 +25,8 @@ type Config struct {
 	CallbackURL string
 	// Provider Endpoint specifying OAuth1 endpoint URLs
 	Endpoint Endpoint
+	// OAuth1 Signer (defaults to HMAC-SHA1)
+	Signer Signer
 }
 
 // NewConfig returns a new Config with the given consumer key and secret.

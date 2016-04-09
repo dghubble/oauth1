@@ -42,6 +42,40 @@ func TestEpoch(t *testing.T) {
 	assert.Equal(t, int64(50037133), a.epoch())
 }
 
+func TestSigner_Default(t *testing.T) {
+	config := &Config{ConsumerSecret: "consumer_secret"}
+	a := newAuther(config)
+	// echo -n "hello world" | openssl dgst -sha1 -hmac "consumer_secret&token_secret" -binary | base64
+	expectedSignature := "BE0uILOruKfSXd4UzYlLJDfOq08="
+	// assert that the default signer produces the expected HMAC-SHA1 digest
+	method := a.signer().Name()
+	digest := a.signer().Sign("token_secret", "hello world")
+	assert.Equal(t, "HMAC-SHA1", method)
+	assert.Equal(t, expectedSignature, digest)
+}
+
+type identitySigner struct{}
+
+func (s *identitySigner) Name() string {
+	return "identity"
+}
+func (s *identitySigner) Sign(tokenSecret, message string) string {
+	return message
+}
+
+func TestSigner_Custom(t *testing.T) {
+	config := &Config{
+		ConsumerSecret: "consumer_secret",
+		Signer:         &identitySigner{},
+	}
+	a := newAuther(config)
+	// assert that the custom signer is used
+	method := a.signer().Name()
+	digest := a.signer().Sign("secret", "hello world")
+	assert.Equal(t, "identity", method)
+	assert.Equal(t, "hello world", digest)
+}
+
 func TestAuthHeaderValue(t *testing.T) {
 	cases := []struct {
 		params     map[string]string
@@ -204,13 +238,4 @@ func TestNormalizedParameterString(t *testing.T) {
 	for _, c := range cases {
 		assert.Equal(t, c.parameterStr, normalizedParameterString(c.params))
 	}
-}
-
-func TestSignature(t *testing.T) {
-	consumerSecret := "consumer_secret"
-	tokenSecret := "token_secret"
-	message := "hello world"
-	// echo -n "hello world" | openssl dgst -sha1 -hmac "consumer_secret&token_secret" -binary | base64
-	expectedSignature := "BE0uILOruKfSXd4UzYlLJDfOq08="
-	assert.Equal(t, expectedSignature, signature(consumerSecret, tokenSecret, message))
 }

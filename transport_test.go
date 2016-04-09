@@ -11,17 +11,18 @@ import (
 
 func TestTransport(t *testing.T) {
 	const (
-		expectedToken       = "access_token"
-		expectedConsumerKey = "consumer_key"
-		expectedNonce       = "some_nonce"
-		expectedTimestamp   = "123456789"
+		expectedToken           = "access_token"
+		expectedConsumerKey     = "consumer_key"
+		expectedNonce           = "some_nonce"
+		expectedSignatureMethod = "HMAC-SHA1"
+		expectedTimestamp       = "123456789"
 	)
 	server := newMockServer(func(w http.ResponseWriter, req *http.Request) {
 		params := parseOAuthParamsOrFail(t, req.Header.Get("Authorization"))
 		assert.Equal(t, expectedToken, params[oauthTokenParam])
 		assert.Equal(t, expectedConsumerKey, params[oauthConsumerKeyParam])
 		assert.Equal(t, expectedNonce, params[oauthNonceParam])
-		assert.Equal(t, defaultSignatureMethod, params[oauthSignatureMethodParam])
+		assert.Equal(t, expectedSignatureMethod, params[oauthSignatureMethodParam])
 		assert.Equal(t, expectedTimestamp, params[oauthTimestampParam])
 		assert.Equal(t, defaultOauthVersion, params[oauthVersionParam])
 		// oauth_signature will vary, httptest.Server uses a random port
