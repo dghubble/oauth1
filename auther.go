@@ -40,17 +40,6 @@ type clock interface {
 	Now() time.Time
 }
 
-type realClock struct{}
-
-// newRealClock returns a clock which delegates calls to the time package.
-func newRealClock() clock {
-	return &realClock{}
-}
-
-func (c *realClock) Now() time.Time {
-	return time.Now()
-}
-
 // A noncer provides random nonce strings.
 type noncer interface {
 	Nonce() string
@@ -67,7 +56,6 @@ type auther struct {
 func newAuther(config *Config) *auther {
 	return &auther{
 		config: config,
-		clock:  newRealClock(),
 	}
 }
 
@@ -144,7 +132,10 @@ func (s *auther) nonce() string {
 
 // Returns the Unix epoch seconds.
 func (s *auther) epoch() int64 {
-	return s.clock.Now().Unix()
+	if s.clock != nil {
+		return s.clock.Now().Unix()
+	}
+	return time.Now().Unix()
 }
 
 // authHeaderValue formats OAuth parameters according to RFC 5849 3.5.1. OAuth

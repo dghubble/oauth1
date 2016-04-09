@@ -33,6 +33,15 @@ func TestNonce(t *testing.T) {
 	assert.Equal(t, 44, len([]byte(nonce)))
 }
 
+func TestEpoch(t *testing.T) {
+	a := &auther{}
+	// assert that a real time is used by default
+	assert.InEpsilon(t, time.Now().Unix(), a.epoch(), 1)
+	// assert that the fixed clock can be used for testing
+	a = &auther{clock: &fixedClock{time.Unix(50037133, 0)}}
+	assert.Equal(t, int64(50037133), a.epoch())
+}
+
 func TestAuthHeaderValue(t *testing.T) {
 	cases := []struct {
 		params     map[string]string
@@ -204,13 +213,4 @@ func TestSignature(t *testing.T) {
 	// echo -n "hello world" | openssl dgst -sha1 -hmac "consumer_secret&token_secret" -binary | base64
 	expectedSignature := "BE0uILOruKfSXd4UzYlLJDfOq08="
 	assert.Equal(t, expectedSignature, signature(consumerSecret, tokenSecret, message))
-}
-
-func TestNewRealClock(t *testing.T) {
-	// assert that realClock implements the clock interface
-	var _ clock = (*realClock)(nil)                     // compilation assertion
-	assert.Implements(t, (*clock)(nil), newRealClock()) // not truly needed
-	// assert that realClock returns a sane current time
-	rk := newRealClock()
-	assert.InEpsilon(t, time.Now().Unix(), rk.Now().Unix(), 1)
 }
