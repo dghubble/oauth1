@@ -45,7 +45,7 @@ func NewClient(ctx context.Context, config *Config, token *Token) *http.Client {
 	transport := &Transport{
 		Base:   contextTransport(ctx),
 		source: StaticTokenSource(token),
-		signer: &Signer{config: config, clock: newRealClock()},
+		auther: newAuther(config),
 	}
 	return &http.Client{Transport: transport}
 }
@@ -61,8 +61,10 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	if err != nil {
 		return "", "", err
 	}
-	signer := &Signer{config: c, clock: newRealClock()}
-	signer.SetRequestTokenAuthHeader(req)
+	err = newAuther(c).setRequestTokenAuthHeader(req)
+	if err != nil {
+		return "", "", err
+	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", "", err
@@ -133,8 +135,10 @@ func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (acce
 	if err != nil {
 		return "", "", err
 	}
-	signer := &Signer{config: c, clock: newRealClock()}
-	signer.SetAccessTokenAuthHeader(req, requestToken, requestSecret, verifier)
+	err = newAuther(c).setAccessTokenAuthHeader(req, requestToken, requestSecret, verifier)
+	if err != nil {
+		return "", "", err
+	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", "", err

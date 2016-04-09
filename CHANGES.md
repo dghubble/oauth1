@@ -1,5 +1,10 @@
 # OAuth1 Changelog
 
+## latest
+
+* Internalized `Signer` (as `auther`) which created Authorization Headers
+    - `SetAccessTokenAuthHeader`, `SetRequestAuthHeader`, and `SetRequestTokenAuthHeader` are no longer exposed.
+
 ## v0.3.0 (2015-09-13)
 
 * Added `NoContext` which may be used in most cases.

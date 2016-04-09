@@ -12,7 +12,7 @@ import (
 
 func TestCommonOAuthParams(t *testing.T) {
 	config := &Config{ConsumerKey: "some_consumer_key"}
-	signer := &Signer{config, &fixedClock{time.Unix(50037133, 0)}, &fixedNoncer{"some_nonce"}}
+	auther := &auther{config, &fixedClock{time.Unix(50037133, 0)}, &fixedNoncer{"some_nonce"}}
 	expectedParams := map[string]string{
 		"oauth_consumer_key":     "some_consumer_key",
 		"oauth_signature_method": "HMAC-SHA1",
@@ -20,25 +20,17 @@ func TestCommonOAuthParams(t *testing.T) {
 		"oauth_nonce":            "some_nonce",
 		"oauth_version":          "1.0",
 	}
-	assert.Equal(t, expectedParams, signer.commonOAuthParams())
+	assert.Equal(t, expectedParams, auther.commonOAuthParams())
 }
 
 func TestNonce(t *testing.T) {
-	signer := &Signer{}
-	nonce := signer.nonce()
+	auther := &auther{}
+	nonce := auther.nonce()
 	// assert that 32 bytes (256 bites) become 44 bytes since a base64 byte
 	// zeros the 2 high bits. 3 bytes convert to 4 base64 bytes, 40 base64 bytes
 	// represent the first 30 of 32 bytes, = padding adds another 4 byte group.
 	// base64 bytes = 4 * floor(bytes/3) + 4
 	assert.Equal(t, 44, len([]byte(nonce)))
-}
-
-func TestSetAuthorizationHeader(t *testing.T) {
-	expectedHeaderValue := "test_authorization_string"
-	req, err := http.NewRequest("GET", "/", nil)
-	assert.Nil(t, err)
-	setAuthorizationHeader(req, expectedHeaderValue)
-	assert.Equal(t, req.Header.Get("Authorization"), expectedHeaderValue)
 }
 
 func TestAuthHeaderValue(t *testing.T) {

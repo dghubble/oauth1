@@ -6,8 +6,8 @@ import (
 )
 
 // Transport is an http.RoundTripper which makes OAuth1 HTTP requests. It
-// wraps a base RoundTripper and adds an Authorization header using an
-// OAuth1 signer and TokenSource.
+// wraps a base RoundTripper and adds an Authorization header using the
+// token from a TokenSource.
 //
 // Transport is a low-level component, most users should use Config to create
 // an http.Client instead.
@@ -17,12 +17,12 @@ type Transport struct {
 	Base http.RoundTripper
 	// source supplies the token to use when signing a request
 	source TokenSource
-	// signer is a configured OAuth 1 Signer
-	signer *Signer
+	// auther adds OAuth1 Authorization headers to requests
+	auther *auther
 }
 
-// RoundTrip authorizes the request with a signed OAuth1 authorization header
-// using the transport token source and signer.
+// RoundTrip authorizes the request with a signed OAuth1 Authorization header
+// using the auther and TokenSource.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if t.source == nil {
 		return nil, fmt.Errorf("oauth1: Transport's source is nil")
@@ -31,12 +31,12 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	if t.signer == nil {
-		return nil, fmt.Errorf("oauth1: Transport's signer is nil")
+	if t.auther == nil {
+		return nil, fmt.Errorf("oauth1: Transport's auther is nil")
 	}
 	// RoundTripper should not modify the given request, clone it
 	req2 := cloneRequest(req)
-	err = t.signer.SetRequestAuthHeader(req2, accessToken)
+	err = t.auther.setRequestAuthHeader(req2, accessToken)
 	if err != nil {
 		return nil, err
 	}

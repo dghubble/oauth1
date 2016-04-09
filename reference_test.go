@@ -35,10 +35,10 @@ func TestTwitterRequestTokenAuthHeader(t *testing.T) {
 		},
 	}
 
-	signer := &Signer{config, &fixedClock{time.Unix(unixTimestamp, 0)}, &fixedNoncer{expectedNonce}}
+	auther := &auther{config, &fixedClock{time.Unix(unixTimestamp, 0)}, &fixedNoncer{expectedNonce}}
 	req, err := http.NewRequest("POST", config.Endpoint.RequestTokenURL, nil)
 	assert.Nil(t, err)
-	err = signer.SetRequestTokenAuthHeader(req)
+	err = auther.setRequestTokenAuthHeader(req)
 	// assert the request for a request token is signed and has an oauth_callback
 	assert.Nil(t, err)
 	params := parseOAuthParamsOrFail(t, req.Header.Get(authorizationHeaderParam))
@@ -72,10 +72,10 @@ func TestTwitterAccessTokenAuthHeader(t *testing.T) {
 		},
 	}
 
-	signer := &Signer{config, &fixedClock{time.Unix(unixTimestamp, 0)}, &fixedNoncer{expectedNonce}}
+	auther := &auther{config, &fixedClock{time.Unix(unixTimestamp, 0)}, &fixedNoncer{expectedNonce}}
 	req, err := http.NewRequest("POST", config.Endpoint.AccessTokenURL, nil)
 	assert.Nil(t, err)
-	err = signer.SetAccessTokenAuthHeader(req, expectedRequestToken, requestTokenSecret, expectedVerifier)
+	err = auther.setAccessTokenAuthHeader(req, expectedRequestToken, requestTokenSecret, expectedVerifier)
 	// assert the request for an access token is signed and has an oauth_token and verifier
 	assert.Nil(t, err)
 	params := parseOAuthParamsOrFail(t, req.Header.Get(authorizationHeaderParam))
@@ -108,14 +108,14 @@ var twitterConfig = &Config{
 }
 
 func TestTwitterParameterString(t *testing.T) {
-	signer := &Signer{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}, &fixedNoncer{expectedNonce}}
+	auther := &auther{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}, &fixedNoncer{expectedNonce}}
 	values := url.Values{}
 	values.Add("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
 	// note: the reference example is old and uses api v1 in the URL
 	req, err := http.NewRequest("post", "https://api.twitter.com/1/statuses/update.json?include_entities=true", strings.NewReader(values.Encode()))
 	assert.Nil(t, err)
 	req.Header.Set(contentType, formContentType)
-	oauthParams := signer.commonOAuthParams()
+	oauthParams := auther.commonOAuthParams()
 	oauthParams[oauthTokenParam] = expectedTwitterOAuthToken
 	params, err := collectParameters(req, oauthParams)
 	// assert that the parameter string matches the reference
@@ -125,14 +125,14 @@ func TestTwitterParameterString(t *testing.T) {
 }
 
 func TestTwitterSignatureBase(t *testing.T) {
-	signer := &Signer{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}, &fixedNoncer{expectedNonce}}
+	auther := &auther{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}, &fixedNoncer{expectedNonce}}
 	values := url.Values{}
 	values.Add("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
 	// note: the reference example is old and uses api v1 in the URL
 	req, err := http.NewRequest("post", "https://api.twitter.com/1/statuses/update.json?include_entities=true", strings.NewReader(values.Encode()))
 	assert.Nil(t, err)
 	req.Header.Set(contentType, formContentType)
-	oauthParams := signer.commonOAuthParams()
+	oauthParams := auther.commonOAuthParams()
 	oauthParams[oauthTokenParam] = expectedTwitterOAuthToken
 	params, err := collectParameters(req, oauthParams)
 	signatureBase := signatureBase(req, params)
@@ -148,7 +148,7 @@ func TestTwitterRequestAuthHeader(t *testing.T) {
 	expectedSignature := PercentEncode("tnnArxj06cWHq44gCs1OSKk/jLY=")
 	expectedTimestamp := "1318622958"
 
-	signer := &Signer{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}, &fixedNoncer{expectedNonce}}
+	auther := &auther{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}, &fixedNoncer{expectedNonce}}
 	values := url.Values{}
 	values.Add("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
 
@@ -156,7 +156,7 @@ func TestTwitterRequestAuthHeader(t *testing.T) {
 	req, err := http.NewRequest("POST", "https://api.twitter.com/1/statuses/update.json?include_entities=true", strings.NewReader(values.Encode()))
 	assert.Nil(t, err)
 	req.Header.Set(contentType, formContentType)
-	err = signer.SetRequestAuthHeader(req, accessToken)
+	err = auther.setRequestAuthHeader(req, accessToken)
 	// assert that request is signed and has an access token token
 	assert.Nil(t, err)
 	params := parseOAuthParamsOrFail(t, req.Header.Get(authorizationHeaderParam))

@@ -34,16 +34,46 @@ const (
 	formContentType           = "application/x-www-form-urlencoded"
 )
 
-// Signer handles signing requests and setting the authorization header.
-type Signer struct {
+// clock provides a interface for current time providers. A Clock can be used
+// in place of calling time.Now() directly.
+type clock interface {
+	Now() time.Time
+}
+
+type realClock struct{}
+
+// newRealClock returns a clock which delegates calls to the time package.
+func newRealClock() clock {
+	return &realClock{}
+}
+
+func (c *realClock) Now() time.Time {
+	return time.Now()
+}
+
+// A noncer provides random nonce strings.
+type noncer interface {
+	Nonce() string
+}
+
+// auther adds an "OAuth" Authorization header field to requests based on the
+// OAuth1 Config.
+type auther struct {
 	config *Config
 	clock  clock
 	noncer noncer
 }
 
-// SetRequestTokenAuthHeader adds the OAuth1 header for the request token
+func newAuther(config *Config) *auther {
+	return &auther{
+		config: config,
+		clock:  newRealClock(),
+	}
+}
+
+// setRequestTokenAuthHeader adds the OAuth1 header for the request token
 // request (temporary credential) according to RFC 5849 2.1.
-func (s *Signer) SetRequestTokenAuthHeader(req *http.Request) error {
+func (s *auther) setRequestTokenAuthHeader(req *http.Request) error {
 	oauthParams := s.commonOAuthParams()
 	oauthParams[oauthCallbackParam] = s.config.CallbackURL
 	params, err := collectParameters(req, oauthParams)
@@ -53,13 +83,13 @@ func (s *Signer) SetRequestTokenAuthHeader(req *http.Request) error {
 	signatureBase := signatureBase(req, params)
 	signature := signature(s.config.ConsumerSecret, "", signatureBase)
 	oauthParams[oauthSignatureParam] = signature
-	setAuthorizationHeader(req, authHeaderValue(oauthParams))
+	req.Header.Set(authorizationHeaderParam, authHeaderValue(oauthParams))
 	return nil
 }
 
-// SetAccessTokenAuthHeader sets the OAuth1 header for the access token request
+// setAccessTokenAuthHeader sets the OAuth1 header for the access token request
 // (token credential) according to RFC 5849 2.3.
-func (s *Signer) SetAccessTokenAuthHeader(req *http.Request, requestToken, requestSecret, verifier string) error {
+func (s *auther) setAccessTokenAuthHeader(req *http.Request, requestToken, requestSecret, verifier string) error {
 	oauthParams := s.commonOAuthParams()
 	oauthParams[oauthTokenParam] = requestToken
 	oauthParams[oauthVerifierParam] = verifier
@@ -70,13 +100,13 @@ func (s *Signer) SetAccessTokenAuthHeader(req *http.Request, requestToken, reque
 	signatureBase := signatureBase(req, params)
 	signature := signature(s.config.ConsumerSecret, requestSecret, signatureBase)
 	oauthParams[oauthSignatureParam] = signature
-	setAuthorizationHeader(req, authHeaderValue(oauthParams))
+	req.Header.Set(authorizationHeaderParam, authHeaderValue(oauthParams))
 	return nil
 }
 
-// SetRequestAuthHeader sets the OAuth1 header for making authenticated
+// setRequestAuthHeader sets the OAuth1 header for making authenticated
 // requests with an AccessToken (token credential) according to RFC 5849 3.1.
-func (s *Signer) SetRequestAuthHeader(req *http.Request, accessToken *Token) error {
+func (s *auther) setRequestAuthHeader(req *http.Request, accessToken *Token) error {
 	oauthParams := s.commonOAuthParams()
 	oauthParams[oauthTokenParam] = accessToken.Token
 	params, err := collectParameters(req, oauthParams)
@@ -86,13 +116,13 @@ func (s *Signer) SetRequestAuthHeader(req *http.Request, accessToken *Token) err
 	signatureBase := signatureBase(req, params)
 	signature := signature(s.config.ConsumerSecret, accessToken.TokenSecret, signatureBase)
 	oauthParams[oauthSignatureParam] = signature
-	setAuthorizationHeader(req, authHeaderValue(oauthParams))
+	req.Header.Set(authorizationHeaderParam, authHeaderValue(oauthParams))
 	return nil
 }
 
 // commonOAuthParams returns a map of the common OAuth1 protocol parameters,
 // excluding the oauth_signature parameter.
-func (s *Signer) commonOAuthParams() map[string]string {
+func (s *auther) commonOAuthParams() map[string]string {
 	return map[string]string{
 		oauthConsumerKeyParam:     s.config.ConsumerKey,
 		oauthSignatureMethodParam: defaultSignatureMethod,
@@ -103,7 +133,7 @@ func (s *Signer) commonOAuthParams() map[string]string {
 }
 
 // Returns a base64 encoded random 32 byte string.
-func (s *Signer) nonce() string {
+func (s *auther) nonce() string {
 	if s.noncer != nil {
 		return s.noncer.Nonce()
 	}
@@ -113,14 +143,8 @@ func (s *Signer) nonce() string {
 }
 
 // Returns the Unix epoch seconds.
-func (s *Signer) epoch() int64 {
+func (s *auther) epoch() int64 {
 	return s.clock.Now().Unix()
-}
-
-// setAuthorizationHeader sets the given headerValue as the request's
-// Authorization header.
-func setAuthorizationHeader(req *http.Request, headerValue string) {
-	req.Header.Set(authorizationHeaderParam, headerValue)
 }
 
 // authHeaderValue formats OAuth parameters according to RFC 5849 3.5.1. OAuth
@@ -245,25 +269,4 @@ func signature(consumerSecret, tokenSecret, message string) string {
 	mac.Write([]byte(message))
 	signatureBytes := mac.Sum(nil)
 	return base64.StdEncoding.EncodeToString(signatureBytes)
-}
-
-// clock provides a interface for current time providers. A Clock can be used
-// in place of calling time.Now() directly.
-type clock interface {
-	Now() time.Time
-}
-
-type realClock struct{}
-
-// newRealClock returns a clock which delegates calls to the time package.
-func newRealClock() clock {
-	return &realClock{}
-}
-
-func (c *realClock) Now() time.Time {
-	return time.Now()
-}
-
-type noncer interface {
-	Nonce() string
 }
