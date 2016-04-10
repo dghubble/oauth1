@@ -65,7 +65,10 @@ func (a *auther) setRequestTokenAuthHeader(req *http.Request) error {
 		return err
 	}
 	signatureBase := signatureBase(req, params)
-	signature := a.signer().Sign("", signatureBase)
+	signature, err := a.signer().Sign("", signatureBase)
+	if err != nil {
+		return err
+	}
 	oauthParams[oauthSignatureParam] = signature
 	req.Header.Set(authorizationHeaderParam, authHeaderValue(oauthParams))
 	return nil
@@ -82,7 +85,10 @@ func (a *auther) setAccessTokenAuthHeader(req *http.Request, requestToken, reque
 		return err
 	}
 	signatureBase := signatureBase(req, params)
-	signature := a.signer().Sign(requestSecret, signatureBase)
+	signature, err := a.signer().Sign(requestSecret, signatureBase)
+	if err != nil {
+		return err
+	}
 	oauthParams[oauthSignatureParam] = signature
 	req.Header.Set(authorizationHeaderParam, authHeaderValue(oauthParams))
 	return nil
@@ -98,7 +104,10 @@ func (a *auther) setRequestAuthHeader(req *http.Request, accessToken *Token) err
 		return err
 	}
 	signatureBase := signatureBase(req, params)
-	signature := a.signer().Sign(accessToken.TokenSecret, signatureBase)
+	signature, err := a.signer().Sign(accessToken.TokenSecret, signatureBase)
+	if err != nil {
+		return err
+	}
 	oauthParams[oauthSignatureParam] = signature
 	req.Header.Set(authorizationHeaderParam, authHeaderValue(oauthParams))
 	return nil
@@ -139,7 +148,7 @@ func (a *auther) signer() Signer {
 	if a.config.Signer != nil {
 		return a.config.Signer
 	}
-	return &HMACSigner{consumerSecret: a.config.ConsumerSecret}
+	return &HMACSigner{ConsumerSecret: a.config.ConsumerSecret}
 }
 
 // authHeaderValue formats OAuth parameters according to RFC 5849 3.5.1. OAuth

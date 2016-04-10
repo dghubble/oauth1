@@ -49,7 +49,8 @@ func TestSigner_Default(t *testing.T) {
 	expectedSignature := "BE0uILOruKfSXd4UzYlLJDfOq08="
 	// assert that the default signer produces the expected HMAC-SHA1 digest
 	method := a.signer().Name()
-	digest := a.signer().Sign("token_secret", "hello world")
+	digest, err := a.signer().Sign("token_secret", "hello world")
+	assert.Nil(t, err)
 	assert.Equal(t, "HMAC-SHA1", method)
 	assert.Equal(t, expectedSignature, digest)
 }
@@ -59,8 +60,9 @@ type identitySigner struct{}
 func (s *identitySigner) Name() string {
 	return "identity"
 }
-func (s *identitySigner) Sign(tokenSecret, message string) string {
-	return message
+
+func (s *identitySigner) Sign(tokenSecret, message string) (string, error) {
+	return message, nil
 }
 
 func TestSigner_Custom(t *testing.T) {
@@ -71,7 +73,8 @@ func TestSigner_Custom(t *testing.T) {
 	a := newAuther(config)
 	// assert that the custom signer is used
 	method := a.signer().Name()
-	digest := a.signer().Sign("secret", "hello world")
+	digest, err := a.signer().Sign("secret", "hello world")
+	assert.Nil(t, err)
 	assert.Equal(t, "identity", method)
 	assert.Equal(t, "hello world", digest)
 }
