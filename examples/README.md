@@ -20,7 +20,7 @@ Use the access `Token` to make requests on behalf of a Twitter user.
     export TWITTER_CONSUMER_KEY=xxx
     export TWITTER_CONSUMER_SECRET=xxx
     export TWITTER_ACCESS_TOKEN=xxx
-    export TWITTER_ACCESS_TOKEN_SECRET=xxx
+    export TWITTER_ACCESS_SECRET=xxx
     go run twitter-request.go
 
 
@@ -41,7 +41,7 @@ Use the access `Token` to make requests on behalf of a Tumblr user.
     export TUMBLR_CONSUMER_KEY=xxx
     export TUMBLR_CONSUMER_SECRET=xxx
     export TUMBLR_ACCESS_TOKEN=xxx
-    export TUMBLR_ACCESS_TOKEN_SECRET=xxx
+    export TUMBLR_ACCESS_SECRET=xxx
     go run tumblr-request.go
 
 Note that only some Tumblr endpoints require OAuth1 signed requests, other endpoints require a special consumer key query parameter or no authorization.

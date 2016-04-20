@@ -53,10 +53,8 @@ func (s *RSASigner) Name() string {
 // Sign uses RSA PKCS1-v1_5 to sign a SHA1 digest of the given message. The
 // tokenSecret is not used with this signing scheme.
 func (s *RSASigner) Sign(tokenSecret, message string) (string, error) {
-	h := sha1.New()
-	h.Write([]byte(message))
-	digest := h.Sum(nil)
-	signature, err := rsa.SignPKCS1v15(rand.Reader, s.PrivateKey, crypto.SHA1, digest)
+	digest := sha1.Sum([]byte(message))
+	signature, err := rsa.SignPKCS1v15(rand.Reader, s.PrivateKey, crypto.SHA1, digest[:])
 	if err != nil {
 		return "", err
 	}

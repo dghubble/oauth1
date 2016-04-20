@@ -157,7 +157,7 @@ func (a *auther) signer() Signer {
 // string.
 // The given OAuth params should include the "oauth_signature" key.
 func authHeaderValue(oauthParams map[string]string) string {
-	pairs := sortParameters(encodeParameters(oauthParams))
+	pairs := sortParameters(encodeParameters(oauthParams), `%s="%s"`)
 	return authorizationPrefix + strings.Join(pairs, ", ")
 }
 
@@ -171,9 +171,9 @@ func encodeParameters(params map[string]string) map[string]string {
 	return encoded
 }
 
-// sortParameters sorts parameters by key and returns a slice of key=value
-// pair strings.
-func sortParameters(params map[string]string) []string {
+// sortParameters sorts parameters by key and returns a slice of key/value
+// pairs formatted with the given format string (e.g. "%s=%s").
+func sortParameters(params map[string]string, format string) []string {
 	// sort by key
 	keys := make([]string, len(params))
 	i := 0
@@ -185,7 +185,7 @@ func sortParameters(params map[string]string) []string {
 	// parameter join
 	pairs := make([]string, len(params))
 	for i, key := range keys {
-		pairs[i] = fmt.Sprintf("%s=%s", key, params[key])
+		pairs[i] = fmt.Sprintf(format, key, params[key])
 	}
 	return pairs
 }
@@ -261,5 +261,5 @@ func baseURI(req *http.Request) string {
 // The parameters are encoded, sorted by key, keys and values joined with "&",
 // and pairs joined with "=" (e.g. foo=bar&q=gopher).
 func normalizedParameterString(params map[string]string) string {
-	return strings.Join(sortParameters(encodeParameters(params)), "&")
+	return strings.Join(sortParameters(encodeParameters(params), "%s=%s"), "&")
 }

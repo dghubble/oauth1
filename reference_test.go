@@ -180,7 +180,7 @@ func parseOAuthParamsOrFail(t *testing.T, authHeader string) map[string]string {
 		if len(pair) != 2 {
 			assert.Fail(t, "Error parsing OAuth parameter %s", pairStr)
 		}
-		params[pair[0]] = pair[1]
+		params[pair[0]] = strings.Replace(pair[1], "\"", "", -1)
 	}
 	return params
 }

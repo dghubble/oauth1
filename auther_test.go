@@ -85,10 +85,10 @@ func TestAuthHeaderValue(t *testing.T) {
 		authHeader string
 	}{
 		{map[string]string{}, "OAuth "},
-		{map[string]string{"a": "b"}, "OAuth a=b"},
-		{map[string]string{"a": "b", "c": "d", "e": "f", "1": "2"}, "OAuth 1=2, a=b, c=d, e=f"},
-		{map[string]string{"/= +doencode": "/= +doencode"}, "OAuth %2F%3D%20%2Bdoencode=%2F%3D%20%2Bdoencode"},
-		{map[string]string{"-._~dontencode": "-._~dontencode"}, "OAuth -._~dontencode=-._~dontencode"},
+		{map[string]string{"a": "b"}, `OAuth a="b"`},
+		{map[string]string{"a": "b", "c": "d", "e": "f", "1": "2"}, `OAuth 1="2", a="b", c="d", e="f"`},
+		{map[string]string{"/= +doencode": "/= +doencode"}, `OAuth %2F%3D%20%2Bdoencode="%2F%3D%20%2Bdoencode"`},
+		{map[string]string{"-._~dontencode": "-._~dontencode"}, `OAuth -._~dontencode="-._~dontencode"`},
 	}
 	for _, c := range cases {
 		assert.Equal(t, c.authHeader, authHeaderValue(c.params))
@@ -127,7 +127,7 @@ func TestSortParameters(t *testing.T) {
 		"dup=fox",
 		"rsa=cat",
 	}
-	assert.Equal(t, expected, sortParameters(input))
+	assert.Equal(t, expected, sortParameters(input, "%s=%s"))
 }
 
 func TestCollectParameters(t *testing.T) {

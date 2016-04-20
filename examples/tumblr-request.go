@@ -14,13 +14,13 @@ func main() {
 	consumerKey := os.Getenv("TUMBLR_CONSUMER_KEY")
 	consumerSecret := os.Getenv("TUMBLR_CONSUMER_SECRET")
 	accessToken := os.Getenv("TUMBLR_ACCESS_TOKEN")
-	accessTokenSecret := os.Getenv("TUMBLR_ACCESS_TOKEN_SECRET")
-	if consumerKey == "" || consumerSecret == "" || accessToken == "" || accessTokenSecret == "" {
+	accessSecret := os.Getenv("TUMBLR_ACCESS_SECRET")
+	if consumerKey == "" || consumerSecret == "" || accessToken == "" || accessSecret == "" {
 		panic("Missing required environment variable")
 	}
 
 	config := oauth1.NewConfig(consumerKey, consumerSecret)
-	token := oauth1.NewToken(accessToken, accessTokenSecret)
+	token := oauth1.NewToken(accessToken, accessSecret)
 
 	// httpClient will automatically authorize http.Request's
 	httpClient := config.Client(oauth1.NoContext, token)
