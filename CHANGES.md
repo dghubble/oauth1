@@ -1,13 +1,13 @@
 # OAuth1 Changelog
 
-## latest
+## v0.4.0 (2016-04-20)
 
-* Use the HMACSigner as the default signer. This is the same signing behavior as in previous versions.
-* Added a Signer field to the Config to allow custom Signer implementations.s
-* Added an RSASigner.
-* Added missing Authorization Header quotes around OAuth parameter values. Many providers allowed these quotes to be missing.
-* Internalized `Signer` (as `auther`) which created Authorization Headers
-    - `SetAccessTokenAuthHeader`, `SetRequestAuthHeader`, and `SetRequestTokenAuthHeader` are no longer exposed.
+* Add a Signer field to the Config to allow custom Signer implementations.
+* Use the HMACSigner by default. This provides the same signing behavior as in previous versions (HMAC-SHA1).
+* Add an RSASigner for "RSA-SHA1" OAuth1 Providers.
+* Add missing Authorization Header quotes around OAuth parameter values. Many providers allowed these quotes to be missing.
+* Change `Signer` to be a signer interface.
+* Remove the old Signer methods `SetAccessTokenAuthHeader`, `SetRequestAuthHeader`, and `SetRequestTokenAuthHeader`.
 
 ## v0.3.0 (2015-09-13)
 
