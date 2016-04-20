@@ -2,6 +2,10 @@
 
 ## latest
 
+* Use the HMACSigner as the default signer. This is the same signing behavior as in previous versions.
+* Added a Signer field to the Config to allow custom Signer implementations.s
+* Added an RSASigner.
+* Added missing Authorization Header quotes around OAuth parameter values. Many providers allowed these quotes to be missing.
 * Internalized `Signer` (as `auther`) which created Authorization Headers
     - `SetAccessTokenAuthHeader`, `SetRequestAuthHeader`, and `SetRequestTokenAuthHeader` are no longer exposed.
 
