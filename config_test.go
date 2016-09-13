@@ -124,7 +124,11 @@ func TestConfigRequestToken_InvalidRequestTokenURL(t *testing.T) {
 }
 
 func TestConfigRequestToken_CallbackNotConfirmed(t *testing.T) {
+	const expectedToken = "reqest_token"
+	const expectedSecret = "request_secret"
 	data := url.Values{}
+	data.Add("oauth_token", expectedToken)
+	data.Add("oauth_token_secret", expectedSecret)
 	data.Add("oauth_callback_confirmed", "false")
 	server := newRequestTokenServer(t, data)
 	defer server.Close()

@@ -82,13 +82,13 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	if err != nil {
 		return "", "", err
 	}
-	if values.Get(oauthCallbackConfirmedParam) != "true" {
-		return "", "", errors.New("oauth1: oauth_callback_confirmed was not true")
-	}
 	requestToken = values.Get(oauthTokenParam)
 	requestSecret = values.Get(oauthTokenSecretParam)
 	if requestToken == "" || requestSecret == "" {
 		return "", "", errors.New("oauth1: Response missing oauth_token or oauth_token_secret")
+	}
+	if values.Get(oauthCallbackConfirmedParam) != "true" {
+		return "", "", errors.New("oauth1: oauth_callback_confirmed was not true")
 	}
 	return requestToken, requestSecret, nil
 }
