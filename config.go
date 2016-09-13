@@ -2,6 +2,7 @@ package oauth1
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -77,6 +78,9 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	if err != nil {
 		return "", "", err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("oauth1: Server returned status %d", resp.StatusCode)
+	}
 	// ParseQuery to decode URL-encoded application/x-www-form-urlencoded body
 	values, err := url.ParseQuery(string(body))
 	if err != nil {
@@ -147,6 +151,9 @@ func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (acce
 	}
 	// when err is nil, resp contains a non-nil resp.Body which must be closed
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("oauth1: Server returned status %d", resp.StatusCode)
+	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", "", err
