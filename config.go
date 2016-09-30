@@ -74,7 +74,7 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	}
 	// when err is nil, resp contains a non-nil resp.Body which must be closed
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return "", "", fmt.Errorf("oauth1: Server returned status %d", resp.StatusCode)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
@@ -151,7 +151,7 @@ func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (acce
 	}
 	// when err is nil, resp contains a non-nil resp.Body which must be closed
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return "", "", fmt.Errorf("oauth1: Server returned status %d", resp.StatusCode)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
