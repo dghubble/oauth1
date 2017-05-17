@@ -13,6 +13,7 @@ import (
 const (
 	oauthTokenSecretParam       = "oauth_token_secret"
 	oauthCallbackConfirmedParam = "oauth_callback_confirmed"
+	oauthLoginURL               = "login_url"
 )
 
 // Config represents an OAuth1 consumer's (client's) key and secret, the
@@ -86,6 +87,7 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	if err != nil {
 		return "", "", err
 	}
+	c.Endpoint.AuthorizeURL = values.Get(oauthLoginURL)
 	requestToken = values.Get(oauthTokenParam)
 	requestSecret = values.Get(oauthTokenSecretParam)
 	if requestToken == "" || requestSecret == "" {
