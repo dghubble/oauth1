@@ -28,6 +28,8 @@ type Config struct {
 	Endpoint Endpoint
 	// OAuth1 Signer (defaults to HMAC-SHA1)
 	Signer Signer
+	// HTTP Client used for base transport (defaults to http.DefaultClient)
+	HTTPClient *http.Client
 }
 
 // NewConfig returns a new Config with the given consumer key and secret.
@@ -43,14 +45,31 @@ func (c *Config) Client(ctx context.Context, t *Token) *http.Client {
 	return NewClient(ctx, c, t)
 }
 
+// ClientWithBaseTransport returns an HTTP client which uses the provided access Token and configured base transport.
+func (c *Config) ClientWithBaseTransport(t *Token) *http.Client {
+	return newClientWithBaseTransport(c, t, c.HTTPClient.Transport)
+}
+
 // NewClient returns a new http Client which signs requests via OAuth1.
 func NewClient(ctx context.Context, config *Config, token *Token) *http.Client {
+	return newClientWithBaseTransport(config, token, contextTransport(ctx))
+}
+
+func newClientWithBaseTransport(config *Config, token *Token, baseTransport http.RoundTripper) *http.Client {
 	transport := &Transport{
-		Base:   contextTransport(ctx),
+		Base:   baseTransport,
 		source: StaticTokenSource(token),
 		auther: newAuther(config),
 	}
 	return &http.Client{Transport: transport}
+}
+
+func baseClient(c *Config) *http.Client {
+	if c.HTTPClient == nil {
+		return http.DefaultClient
+	}
+
+	return c.HTTPClient
 }
 
 // RequestToken obtains a Request token and secret (temporary credential) by
@@ -68,7 +87,7 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	if err != nil {
 		return "", "", err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := baseClient(c).Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -145,7 +164,7 @@ func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (acce
 	if err != nil {
 		return "", "", err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := baseClient(c).Do(req)
 	if err != nil {
 		return "", "", err
 	}

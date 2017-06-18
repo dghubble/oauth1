@@ -56,6 +56,17 @@ func TestNewClient_ContextClientTransport(t *testing.T) {
 	assert.Equal(t, baseTransport, transport.base())
 }
 
+func TestClientWithBaseTransport(t *testing.T) {
+	baseTransport := &http.Transport{}
+	baseClient := &http.Client{Transport: baseTransport}
+	config := &Config{ConsumerKey: "t", ConsumerSecret: "s", HTTPClient: baseClient}
+	client := config.ClientWithBaseTransport(NewToken("t", "s"))
+	// assert that the client uses the config's client's Transport as its base RoundTripper
+	transport, ok := client.Transport.(*Transport)
+	assert.True(t, ok)
+	assert.Equal(t, baseTransport, transport.base())
+}
+
 // newRequestTokenServer returns a new httptest.Server for an OAuth1 provider
 // request token endpoint.
 func newRequestTokenServer(t *testing.T, data url.Values) *httptest.Server {
