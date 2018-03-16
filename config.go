@@ -59,7 +59,7 @@ func NewClient(ctx context.Context, config *Config, token *Token) *http.Client {
 // oauth_callback_confirmed is true. Returns the request token and secret
 // (temporary credentials).
 // See RFC 5849 2.1 Temporary Credentials.
-func (c *Config) RequestToken() (requestToken, requestSecret string, err error) {
+func (c *Config) RequestToken(bypassConfirm bool) (requestToken, requestSecret string, err error) {
 	req, err := http.NewRequest("POST", c.Endpoint.RequestTokenURL, nil)
 	if err != nil {
 		return "", "", err
@@ -91,7 +91,7 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	if requestToken == "" || requestSecret == "" {
 		return "", "", errors.New("oauth1: Response missing oauth_token or oauth_token_secret")
 	}
-	if values.Get(oauthCallbackConfirmedParam) != "true" {
+	if !bypassConfirm && values.Get(oauthCallbackConfirmedParam) != "true" {
 		return "", "", errors.New("oauth1: oauth_callback_confirmed was not true")
 	}
 	return requestToken, requestSecret, nil
