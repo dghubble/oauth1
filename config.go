@@ -1,13 +1,12 @@
 package oauth1
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-
-	"golang.org/x/net/context"
 )
 
 const (

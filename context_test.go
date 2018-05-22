@@ -1,11 +1,11 @@
 package oauth1
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 func TestContextTransport(t *testing.T) {

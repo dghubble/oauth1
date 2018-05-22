@@ -1,13 +1,13 @@
 package oauth1
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 const expectedVerifier = "some_verifier"
