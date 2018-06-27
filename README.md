@@ -106,6 +106,27 @@ func main() {
 
 Check the [examples](examples) to see Twitter and Tumblr requests in action.
 
+### Google App Engine
+
+With purpose to use oauth1 in Google App Engine - use next example:
+
+```go
+import (
+    "github.com/dghubble/oauth1"
+    "golang.org/x/net/context"
+)
+
+func main() {
+    config := oauth1.NewConfig("consumerKey", "consumerSecret")
+    token := oauth1.NewToken("token", "tokenSecret")
+
+    ctx := context.WithValue(ctxGAE, oauth1.HTTPClient, urlfetch.Client(ctxGAE))
+	httpClient := config.Client(ctx, token)
+
+    // ...
+}
+```
+
 ### Concepts
 
 An `Endpoint` groups an OAuth provider's token and authorization URL endpoints.Endpoints for common providers are provided in subpackages.
