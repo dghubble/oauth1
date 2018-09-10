@@ -73,6 +73,9 @@ config := oauth1.Config{
 
     ```go
     accessToken, accessSecret, err := config.AccessToken(requestToken, requestSecret, verifier)
+    // or use RetrieveAccessToken() if need any extra field (include oauth_token and oauth_token_secret).
+    // response_values, err := config.RetrieveAccessToken(requestToken, requestSecret, verifier)
+    
     // handle error
     token := oauth1.NewToken(accessToken, accessSecret)
     ```
