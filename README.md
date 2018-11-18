@@ -111,7 +111,7 @@ An `Endpoint` groups an OAuth provider's token and authorization URL endpoints.E
 
 A `Config` stores a consumer application's consumer key and secret, the registered callback URL, and the `Endpoint` to which the consumer is registered. It provides OAuth1 authorization flow methods.
 
-An OAuth1 `Token` is an access token which can be used to make signed requests on behalf of a user. See [Authorized Requests](#Authorized Requests) for details.
+An OAuth1 `Token` is an access token which can be used to make signed requests on behalf of a user. See [Authorized Requests](#authorized-requests) for details.
 
 If you've used the [golang.org/x/oauth2](https://godoc.org/golang.org/x/oauth2) package for OAuth2 before, this organization should be familiar.
 
