@@ -1,16 +1,15 @@
-
-# OAuth1 [![Build Status](https://travis-ci.org/dghubble/oauth1.png)](https://travis-ci.org/dghubble/oauth1) [![GoDoc](http://godoc.org/github.com/dghubble/oauth1?status.png)](http://godoc.org/github.com/dghubble/oauth1)
+# OAuth1 [![Build Status](https://travis-ci.org/dghubble/oauth1.svg?branch=master)](https://travis-ci.org/dghubble/oauth1) [![GoDoc](http://godoc.org/github.com/dghubble/oauth1?status.svg)](http://godoc.org/github.com/dghubble/oauth1)
 <img align="right" src="https://storage.googleapis.com/dghubble/oauth1.png">
 
-OAauth1 is a Go implementation of the [OAuth 1 spec](https://tools.ietf.org/html/rfc5849).
+Package `oauth1` provides a Go implementation of the [OAuth 1 spec](https://tools.ietf.org/html/rfc5849) to allow end-users to authorize a client (i.e. consumer) to access protected resources on his/her behalf.
 
-It allows end-users to authorize a client (consumer) to access protected resources on his/her behalf and to make signed and authorized requests.
-
-Package `oauth1` takes design cues from [golang.org/x/oauth2](https://godoc.org/golang.org/x/oauth2), to provide an analogous API and an `http.Client` with a Transport which signs/authorizes requests.
+`oauth1` takes design cues from [golang.org/x/oauth2](https://godoc.org/golang.org/x/oauth2), to provide an analogous API and an `http.Client` with a Transport which signs/authorizes requests.
 
 ## Install
 
-    go get github.com/dghubble/oauth1
+```
+go get github.com/dghubble/oauth1
+```
 
 ## Docs
 
