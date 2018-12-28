@@ -29,6 +29,7 @@ const (
 	defaultOauthVersion       = "1.0"
 	contentType               = "Content-Type"
 	formContentType           = "application/x-www-form-urlencoded"
+	realmParam                = "realm"
 )
 
 // clock provides a interface for current time providers. A Clock can be used
@@ -70,6 +71,9 @@ func (a *auther) setRequestTokenAuthHeader(req *http.Request) error {
 		return err
 	}
 	oauthParams[oauthSignatureParam] = signature
+	if a.config.Realm != "" {
+		oauthParams[realmParam] = a.config.Realm
+	}
 	req.Header.Set(authorizationHeaderParam, authHeaderValue(oauthParams))
 	return nil
 }
@@ -114,15 +118,21 @@ func (a *auther) setRequestAuthHeader(req *http.Request, accessToken *Token) err
 }
 
 // commonOAuthParams returns a map of the common OAuth1 protocol parameters,
-// excluding the oauth_signature parameter.
+// excluding the oauth_signature parameter. This includes the realm parameter
+// if it was set in the config. The realm parameter will not be included in
+// the signature base string as specified in RFC 5849 3.4.1.3.1.
 func (a *auther) commonOAuthParams() map[string]string {
-	return map[string]string{
+	params := map[string]string{
 		oauthConsumerKeyParam:     a.config.ConsumerKey,
 		oauthSignatureMethodParam: a.signer().Name(),
 		oauthTimestampParam:       strconv.FormatInt(a.epoch(), 10),
 		oauthNonceParam:           a.nonce(),
 		oauthVersionParam:         defaultOauthVersion,
 	}
+	if a.config.Realm != "" {
+		params[realmParam] = a.config.Realm
+	}
+	return params
 }
 
 // Returns a base64 encoded random 32 byte string.
@@ -220,7 +230,10 @@ func collectParameters(req *http.Request, oauthParams map[string]string) (map[st
 		req.Body = ioutil.NopCloser(bytes.NewReader(b))
 	}
 	for key, value := range oauthParams {
-		params[key] = value
+		// according to 3.4.1.3.1. the realm parameter is excluded
+		if key != realmParam {
+			params[key] = value
+		}
 	}
 	return params, nil
 }

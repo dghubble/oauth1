@@ -11,16 +11,44 @@ import (
 )
 
 func TestCommonOAuthParams(t *testing.T) {
-	config := &Config{ConsumerKey: "some_consumer_key"}
-	auther := &auther{config, &fixedClock{time.Unix(50037133, 0)}, &fixedNoncer{"some_nonce"}}
-	expectedParams := map[string]string{
-		"oauth_consumer_key":     "some_consumer_key",
-		"oauth_signature_method": "HMAC-SHA1",
-		"oauth_timestamp":        "50037133",
-		"oauth_nonce":            "some_nonce",
-		"oauth_version":          "1.0",
+	cases := []struct {
+		auther         *auther
+		expectedParams map[string]string
+	}{
+		{
+			&auther{
+				&Config{ConsumerKey: "some_consumer_key"},
+				&fixedClock{time.Unix(50037133, 0)},
+				&fixedNoncer{"some_nonce"},
+			},
+			map[string]string{
+				"oauth_consumer_key":     "some_consumer_key",
+				"oauth_signature_method": "HMAC-SHA1",
+				"oauth_timestamp":        "50037133",
+				"oauth_nonce":            "some_nonce",
+				"oauth_version":          "1.0",
+			},
+		},
+		{
+			&auther{
+				&Config{ConsumerKey: "some_consumer_key", Realm: "photos"},
+				&fixedClock{time.Unix(50037133, 0)},
+				&fixedNoncer{"some_nonce"},
+			},
+			map[string]string{
+				"oauth_consumer_key":     "some_consumer_key",
+				"oauth_signature_method": "HMAC-SHA1",
+				"oauth_timestamp":        "50037133",
+				"oauth_nonce":            "some_nonce",
+				"oauth_version":          "1.0",
+				"realm":                  "photos",
+			},
+		},
 	}
-	assert.Equal(t, expectedParams, auther.commonOAuthParams())
+
+	for _, c := range cases {
+		assert.Equal(t, c.expectedParams, c.auther.commonOAuthParams())
+	}
 }
 
 func TestNonce(t *testing.T) {
@@ -138,6 +166,7 @@ func TestCollectParameters(t *testing.T) {
 		"oauth_signature_method": "HMAC-SHA1",
 		"oauth_timestamp":        "137131201",
 		"oauth_nonce":            "7d8f3e4a",
+		"realm":                  "photos",
 	}
 	values := url.Values{}
 	values.Add("c2", "")
@@ -147,6 +176,7 @@ func TestCollectParameters(t *testing.T) {
 	req.Header.Set(contentType, formContentType)
 	params, err := collectParameters(req, oauthParams)
 	// assert parameters were collected from oauthParams, the query, and form body
+	// excluding the realm parameter
 	expected := map[string]string{
 		"b5":                     "=%3D",
 		"a3":                     "a",
