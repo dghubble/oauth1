@@ -25,6 +25,8 @@ type Config struct {
 	CallbackURL string
 	// Provider Endpoint specifying OAuth1 endpoint URLs
 	Endpoint Endpoint
+	// Realm of authorization
+	Realm string
 	// OAuth1 Signer (defaults to HMAC-SHA1)
 	Signer Signer
 }
