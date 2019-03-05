@@ -8,3 +8,5 @@ install:
   - go get -v -t .
 script:
   - make
+notification:
+  email: change
