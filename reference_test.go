@@ -33,9 +33,10 @@ func TestTwitterRequestTokenAuthHeader(t *testing.T) {
 			AuthorizeURL:    "https://api.twitter.com/oauth/authorize",
 			AccessTokenURL:  "https://api.twitter.com/oauth/access_token",
 		},
+		Noncer: &identityNoncer{expectedNonce},
 	}
 
-	auther := &auther{config, &fixedClock{time.Unix(unixTimestamp, 0)}, &fixedNoncer{expectedNonce}}
+	auther := &auther{config, &fixedClock{time.Unix(unixTimestamp, 0)}}
 	req, err := http.NewRequest("POST", config.Endpoint.RequestTokenURL, nil)
 	assert.Nil(t, err)
 	err = auther.setRequestTokenAuthHeader(req)
@@ -70,9 +71,10 @@ func TestTwitterAccessTokenAuthHeader(t *testing.T) {
 			AuthorizeURL:    "https://api.twitter.com/oauth/authorize",
 			AccessTokenURL:  "https://api.twitter.com/oauth/access_token",
 		},
+		Noncer: &identityNoncer{expectedNonce},
 	}
 
-	auther := &auther{config, &fixedClock{time.Unix(unixTimestamp, 0)}, &fixedNoncer{expectedNonce}}
+	auther := &auther{config, &fixedClock{time.Unix(unixTimestamp, 0)}}
 	req, err := http.NewRequest("POST", config.Endpoint.AccessTokenURL, nil)
 	assert.Nil(t, err)
 	err = auther.setAccessTokenAuthHeader(req, expectedRequestToken, requestTokenSecret, expectedVerifier)
@@ -105,10 +107,11 @@ var twitterConfig = &Config{
 		AuthorizeURL:    "https://api.twitter.com/oauth/authorize",
 		AccessTokenURL:  "https://api.twitter.com/oauth/access_token",
 	},
+	Noncer: &identityNoncer{expectedNonce},
 }
 
 func TestTwitterParameterString(t *testing.T) {
-	auther := &auther{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}, &fixedNoncer{expectedNonce}}
+	auther := &auther{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}}
 	values := url.Values{}
 	values.Add("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
 	// note: the reference example is old and uses api v1 in the URL
@@ -125,7 +128,7 @@ func TestTwitterParameterString(t *testing.T) {
 }
 
 func TestTwitterSignatureBase(t *testing.T) {
-	auther := &auther{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}, &fixedNoncer{expectedNonce}}
+	auther := &auther{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}}
 	values := url.Values{}
 	values.Add("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
 	// note: the reference example is old and uses api v1 in the URL
@@ -148,7 +151,7 @@ func TestTwitterRequestAuthHeader(t *testing.T) {
 	expectedSignature := PercentEncode("tnnArxj06cWHq44gCs1OSKk/jLY=")
 	expectedTimestamp := "1318622958"
 
-	auther := &auther{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}, &fixedNoncer{expectedNonce}}
+	auther := &auther{twitterConfig, &fixedClock{time.Unix(unixTimestampOfRequest, 0)}}
 	values := url.Values{}
 	values.Add("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
 
@@ -191,12 +194,4 @@ type fixedClock struct {
 
 func (c *fixedClock) Now() time.Time {
 	return c.now
-}
-
-type fixedNoncer struct {
-	nonce string
-}
-
-func (n *fixedNoncer) Nonce() string {
-	return n.nonce
 }

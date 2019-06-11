@@ -10,6 +10,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type identityNoncer struct {
+	nonce string
+}
+
+func (n *identityNoncer) Nonce() string {
+	return n.nonce
+}
+
 func TestCommonOAuthParams(t *testing.T) {
 	cases := []struct {
 		auther         *auther
@@ -17,9 +25,8 @@ func TestCommonOAuthParams(t *testing.T) {
 	}{
 		{
 			&auther{
-				&Config{ConsumerKey: "some_consumer_key"},
+				&Config{ConsumerKey: "some_consumer_key", Noncer: &identityNoncer{nonce: "some_nonce"}},
 				&fixedClock{time.Unix(50037133, 0)},
-				&fixedNoncer{"some_nonce"},
 			},
 			map[string]string{
 				"oauth_consumer_key":     "some_consumer_key",
@@ -31,9 +38,8 @@ func TestCommonOAuthParams(t *testing.T) {
 		},
 		{
 			&auther{
-				&Config{ConsumerKey: "some_consumer_key", Realm: "photos"},
+				&Config{ConsumerKey: "some_consumer_key", Realm: "photos", Noncer: &identityNoncer{nonce: "some_nonce"}},
 				&fixedClock{time.Unix(50037133, 0)},
-				&fixedNoncer{"some_nonce"},
 			},
 			map[string]string{
 				"oauth_consumer_key":     "some_consumer_key",
@@ -51,14 +57,25 @@ func TestCommonOAuthParams(t *testing.T) {
 	}
 }
 
-func TestNonce(t *testing.T) {
+func TestNonce_Default(t *testing.T) {
 	auther := &auther{}
-	nonce := auther.nonce()
+	nonce := auther.noncer().Nonce()
 	// assert that 32 bytes (256 bites) become 44 bytes since a base64 byte
 	// zeros the 2 high bits. 3 bytes convert to 4 base64 bytes, 40 base64 bytes
 	// represent the first 30 of 32 bytes, = padding adds another 4 byte group.
 	// base64 bytes = 4 * floor(bytes/3) + 4
 	assert.Equal(t, 44, len([]byte(nonce)))
+}
+
+func TestNonce_Custom(t *testing.T) {
+	customNonce := "custom_nonce"
+	config := &Config{
+		Noncer: &identityNoncer{nonce: customNonce},
+	}
+	a := newAuther(config)
+	// assert that the custom noncer is used
+	nonce := a.noncer().Nonce()
+	assert.Equal(t, customNonce, nonce)
 }
 
 func TestEpoch(t *testing.T) {

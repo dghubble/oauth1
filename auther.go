@@ -2,8 +2,6 @@ package oauth1
 
 import (
 	"bytes"
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -38,16 +36,10 @@ type clock interface {
 	Now() time.Time
 }
 
-// A noncer provides random nonce strings.
-type noncer interface {
-	Nonce() string
-}
-
 // auther adds an "OAuth" Authorization header field to requests.
 type auther struct {
 	config *Config
 	clock  clock
-	noncer noncer
 }
 
 func newAuther(config *Config) *auther {
@@ -126,23 +118,13 @@ func (a *auther) commonOAuthParams() map[string]string {
 		oauthConsumerKeyParam:     a.config.ConsumerKey,
 		oauthSignatureMethodParam: a.signer().Name(),
 		oauthTimestampParam:       strconv.FormatInt(a.epoch(), 10),
-		oauthNonceParam:           a.nonce(),
+		oauthNonceParam:           a.noncer().Nonce(),
 		oauthVersionParam:         defaultOauthVersion,
 	}
 	if a.config.Realm != "" {
 		params[realmParam] = a.config.Realm
 	}
 	return params
-}
-
-// Returns a base64 encoded random 32 byte string.
-func (a *auther) nonce() string {
-	if a.noncer != nil {
-		return a.noncer.Nonce()
-	}
-	b := make([]byte, 32)
-	rand.Read(b)
-	return base64.StdEncoding.EncodeToString(b)
 }
 
 // Returns the Unix epoch seconds.
@@ -153,9 +135,17 @@ func (a *auther) epoch() int64 {
 	return time.Now().Unix()
 }
 
+// noncer returns the Config's Noncer or the default Noncer.
+func (a *auther) noncer() Noncer {
+	if a.config != nil && a.config.Noncer != nil {
+		return a.config.Noncer
+	}
+	return &DefaultNoncer{}
+}
+
 // Returns the Config's Signer or the default Signer.
 func (a *auther) signer() Signer {
-	if a.config.Signer != nil {
+	if a.config != nil && a.config.Signer != nil {
 		return a.config.Signer
 	}
 	return &HMACSigner{ConsumerSecret: a.config.ConsumerSecret}
