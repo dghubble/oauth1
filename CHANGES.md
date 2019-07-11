@@ -4,6 +4,10 @@ Notable changes between releases.
 
 ## Latest
 
+## v0.6.0
+
+* Add Go module support ([#32](https://github.com/dghubble/oauth1/pull/32))
+
 ## v0.5.0
 
 * Use standard library `context` ([c0a405](https://github.com/dghubble/oauth1/commit/c0a405baf29f5ed2616bc1ef6b778532c960aa5b))
