@@ -60,3 +60,20 @@ func (s *RSASigner) Sign(tokenSecret, message string) (string, error) {
 	}
 	return base64.StdEncoding.EncodeToString(signature), nil
 }
+
+// PLAINTEXTSigner signs messages with a concatenated consumer secret and token
+// secret as the key. https://oauth.net/core/1.0a/#rfc.section.9.4.1
+type PLAINTEXTSigner struct {
+	ConsumerSecret string
+}
+
+// Name returns the PLAINTEXT method.
+func (s *PLAINTEXTSigner) Name() string {
+	return "PLAINTEXT"
+}
+
+// Sign creates a concatenated consumer and token secret key and returns it.
+func (s *PLAINTEXTSigner) Sign(tokenSecret, message string) (string, error) {
+	signature := strings.Join([]string{s.ConsumerSecret, tokenSecret}, "&")
+	return signature, nil
+}

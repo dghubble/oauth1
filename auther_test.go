@@ -83,6 +83,23 @@ func TestSigner_Default(t *testing.T) {
 	assert.Equal(t, expectedSignature, digest)
 }
 
+func TestSigner_PLAINTEXT(t *testing.T) {
+	consumerSecret := "consumer_secret"
+	config := &Config{
+		ConsumerSecret: consumerSecret,
+		Signer: &PLAINTEXTSigner{
+			ConsumerSecret: consumerSecret,
+		},
+	}
+	a := newAuther(config)
+	// assert that the PLAINTEXT signer is used
+	method := a.signer().Name()
+	digest, err := a.signer().Sign("token_secret", "")
+	assert.Nil(t, err)
+	assert.Equal(t, "PLAINTEXT", method)
+	assert.Equal(t, "consumer_secret&token_secret", digest)
+}
+
 type identitySigner struct{}
 
 func (s *identitySigner) Name() string {
