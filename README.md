@@ -34,7 +34,7 @@ Perform the OAuth 1 authorization flow to ask a user to grant an application acc
 ```go
 import (
     "github.com/dghubble/oauth1"
-    "github.com/dghubble/oauth1/twitter""
+    "github.com/dghubble/oauth1/twitter"
 )
 ...
 
