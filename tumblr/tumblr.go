@@ -7,7 +7,7 @@ import (
 
 // Endpoint is Tumblr's OAuth 1a endpoint.
 var Endpoint = oauth1.Endpoint{
-	RequestTokenURL: "http://www.tumblr.com/oauth/request_token",
-	AuthorizeURL:    "http://www.tumblr.com/oauth/authorize",
-	AccessTokenURL:  "http://www.tumblr.com/oauth/access_token",
+	RequestTokenURL: "https://www.tumblr.com/oauth/request_token",
+	AuthorizeURL:    "https://www.tumblr.com/oauth/authorize",
+	AccessTokenURL:  "https://www.tumblr.com/oauth/access_token",
 }
