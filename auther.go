@@ -102,7 +102,9 @@ func (a *auther) setAccessTokenAuthHeader(req *http.Request, requestToken, reque
 // requests with an AccessToken (token credential) according to RFC 5849 3.1.
 func (a *auther) setRequestAuthHeader(req *http.Request, accessToken *Token) error {
 	oauthParams := a.commonOAuthParams()
-	oauthParams[oauthTokenParam] = accessToken.Token
+	if accessToken.Token != "" {
+		oauthParams[oauthTokenParam] = accessToken.Token
+	}
 	params, err := collectParameters(req, oauthParams)
 	if err != nil {
 		return err
