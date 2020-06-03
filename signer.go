@@ -39,6 +39,22 @@ func (s *HMACSigner) Sign(tokenSecret, message string) (string, error) {
 	return base64.StdEncoding.EncodeToString(signatureBytes), nil
 }
 
+// PlainTextSigner use the concatenation of the consumer secret and the token secret
+type PlainTextSigner struct {
+	ConsumerSecret string
+}
+
+// Name returns the PlainText method.
+func (s *PlainTextSigner) Name() string {
+	return "PLAINTEXT"
+}
+
+// Sign returns a concatenated consumer and token secret key according to
+// https://tools.ietf.org/html/rfc5849#section-3.4.4
+func (s *PlainTextSigner) Sign(tokenSecret, message string) (string, error) {
+	return strings.Join([]string{s.ConsumerSecret, tokenSecret}, "&"), nil
+}
+
 // RSASigner RSA PKCS1-v1_5 signs SHA1 digests of messages using the given
 // RSA private key.
 type RSASigner struct {
