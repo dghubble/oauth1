@@ -78,7 +78,7 @@ func TestTransport_nilSource(t *testing.T) {
 	resp, err := client.Get("http://example.com")
 	assert.Nil(t, resp)
 	if assert.Error(t, err) {
-		assert.Equal(t, "Get http://example.com: oauth1: Transport's source is nil", err.Error())
+		assert.Contains(t, err.Error(), "oauth1: Transport's source is nil")
 	}
 }
 
@@ -95,7 +95,7 @@ func TestTransport_emptySource(t *testing.T) {
 	resp, err := client.Get("http://example.com")
 	assert.Nil(t, resp)
 	if assert.Error(t, err) {
-		assert.Equal(t, "Get http://example.com: oauth1: Token is nil", err.Error())
+		assert.Contains(t, err.Error(), "oauth1: Token is nil")
 	}
 }
 
@@ -108,7 +108,7 @@ func TestTransport_nilAuther(t *testing.T) {
 	resp, err := client.Get("http://example.com")
 	assert.Nil(t, resp)
 	if assert.Error(t, err) {
-		assert.Equal(t, "Get http://example.com: oauth1: Transport's auther is nil", err.Error())
+		assert.Contains(t, err.Error(), "oauth1: Transport's auther is nil")
 	}
 }
 
