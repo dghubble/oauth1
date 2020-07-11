@@ -83,6 +83,21 @@ func TestSigner_Default(t *testing.T) {
 	assert.Equal(t, expectedSignature, digest)
 }
 
+func TestSigner_SHA256(t *testing.T) {
+	config := &Config{
+		Signer: &HMAC256Signer{ConsumerSecret: "consumer_secret"},
+	}
+	a := newAuther(config)
+	// echo -n "hello world" | openssl dgst -sha256 -hmac "consumer_secret&token_secret" -binary | base64
+	expectedSignature := "pW9drXUyErU8DASWbsP2I3XZbju37AW+VzcGdYSeMo8="
+	// assert that the signer produces the expected HMAC-SHA256 digest
+	method := a.signer().Name()
+	digest, err := a.signer().Sign("token_secret", "hello world")
+	assert.Nil(t, err)
+	assert.Equal(t, "HMAC-SHA256", method)
+	assert.Equal(t, expectedSignature, digest)
+}
+
 type identitySigner struct{}
 
 func (s *identitySigner) Name() string {
