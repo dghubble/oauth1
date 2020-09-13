@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -210,6 +211,9 @@ func collectParameters(req *http.Request, oauthParams map[string]string) (map[st
 	params := map[string]string{}
 	for key, value := range req.URL.Query() {
 		// most backends do not accept duplicate query keys
+		if len(value) > 1 {
+			return nil, errors.New("oauth1: multiple query values for one key is not supported")
+		}
 		params[key] = value[0]
 	}
 	if req.Body != nil && req.Header.Get(contentType) == formContentType {
