@@ -26,17 +26,43 @@ var (
 	// DefaultNoncer is the default Noncer. It reads 32
 	// bytes from crypto/rand and returns those bytes as a
 	// base64 encoded string.
-	DefaultNoncer Noncer = NoncerFunc(func() string {
-		b := make([]byte, 32)
-		rand.Read(b)
-		return base64.StdEncoding.EncodeToString(b)
-	})
-
-	// HexNoncer reads 16 bytes from crypto/rand and returns
-	// those bytes as a hex encoded string.
-	HexNoncer Noncer = NoncerFunc(func() string {
-		b := make([]byte, 16)
-		rand.Read(b)
-		return hex.EncodeToString(b)
-	})
+	DefaultNoncer Noncer = Base64Noncer{
+		Length: 32,
+	}
 )
+
+// Base64Noncer reads Length bytes from crypto/rand and
+// returns those bytes as a base64 encoded string. If
+// Length is 0, 32 bytes are read.
+type Base64Noncer struct {
+	Length int
+}
+
+// Nonce provides a random nonce string.
+func (n Base64Noncer) Nonce() string {
+	length := n.Length
+	if length == 0 {
+		length = 32
+	}
+	b := make([]byte, length)
+	rand.Read(b)
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+// HexNoncer reads Length bytes from crypto/rand and
+// returns those bytes as a base64 encoded string. If
+// Length is 0, 32 bytes are read.
+type HexNoncer struct {
+	Length int
+}
+
+// Nonce provides a random nonce string.
+func (n HexNoncer) Nonce() string {
+	length := n.Length
+	if length == 0 {
+		length = 32
+	}
+	b := make([]byte, length)
+	rand.Read(b)
+	return hex.EncodeToString(b)
+}
