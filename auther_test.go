@@ -17,9 +17,11 @@ func TestCommonOAuthParams(t *testing.T) {
 	}{
 		{
 			&auther{
-				&Config{ConsumerKey: "some_consumer_key"},
+				&Config{
+					ConsumerKey: "some_consumer_key",
+					Noncer:      &fixedNoncer{"some_nonce"},
+				},
 				&fixedClock{time.Unix(50037133, 0)},
-				&fixedNoncer{"some_nonce"},
 			},
 			map[string]string{
 				"oauth_consumer_key":     "some_consumer_key",
@@ -31,9 +33,12 @@ func TestCommonOAuthParams(t *testing.T) {
 		},
 		{
 			&auther{
-				&Config{ConsumerKey: "some_consumer_key", Realm: "photos"},
+				&Config{
+					ConsumerKey: "some_consumer_key",
+					Realm:       "photos",
+					Noncer:      &fixedNoncer{"some_nonce"},
+				},
 				&fixedClock{time.Unix(50037133, 0)},
-				&fixedNoncer{"some_nonce"},
 			},
 			map[string]string{
 				"oauth_consumer_key":     "some_consumer_key",
