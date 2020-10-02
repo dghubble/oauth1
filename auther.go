@@ -43,6 +43,12 @@ type auther struct {
 }
 
 func newAuther(config *Config) *auther {
+	if config == nil {
+		config = &Config{}
+	}
+	if config.Noncer == nil {
+		config.Noncer = Base64Noncer{}
+	}
 	return &auther{
 		config: config,
 	}
@@ -127,13 +133,9 @@ func (a *auther) commonOAuthParams() map[string]string {
 	return params
 }
 
-// Returns a base64 encoded random 32 byte string.
+// Returns a nonce using the configured Noncer.
 func (a *auther) nonce() string {
-	noncer := DefaultNoncer
-	if cfg := a.config; cfg != nil && cfg.Noncer != nil {
-		noncer = cfg.Noncer
-	}
-	return noncer.Nonce()
+	return a.config.Noncer.Nonce()
 }
 
 // Returns the Unix epoch seconds.

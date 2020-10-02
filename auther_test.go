@@ -57,7 +57,7 @@ func TestCommonOAuthParams(t *testing.T) {
 }
 
 func TestNonce(t *testing.T) {
-	auther := &auther{}
+	auther := newAuther(nil)
 	nonce := auther.nonce()
 	// assert that 32 bytes (256 bites) become 44 bytes since a base64 byte
 	// zeros the 2 high bits. 3 bytes convert to 4 base64 bytes, 40 base64 bytes
@@ -67,7 +67,7 @@ func TestNonce(t *testing.T) {
 }
 
 func TestEpoch(t *testing.T) {
-	a := &auther{}
+	a := newAuther(nil)
 	// assert that a real time is used by default
 	assert.InEpsilon(t, time.Now().Unix(), a.epoch(), 1)
 	// assert that the fixed clock can be used for testing
