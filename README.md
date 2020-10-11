@@ -1,4 +1,4 @@
-# OAuth1 [![Build Status](https://github.com/dghubble/oauth1/workflows/go/badge.svg)](https://github.com/dghubble/oauth1/actions?query=workflow%3Atest+branch%3Amaster) [![Coverage](https://gocover.io/_badge/github.com/dghubble/oauth1)](https://gocover.io/github.com/dghubble/oauth1) [![GoDoc](http://godoc.org/github.com/dghubble/oauth1?status.svg)](http://godoc.org/github.com/dghubble/oauth1)
+# OAuth1 [![Build Status](https://github.com/dghubble/oauth1/workflows/test/badge.svg)](https://github.com/dghubble/oauth1/actions?query=workflow%3Atest+branch%3Amaster) [![Coverage](https://gocover.io/_badge/github.com/dghubble/oauth1)](https://gocover.io/github.com/dghubble/oauth1) [![GoDoc](http://godoc.org/github.com/dghubble/oauth1?status.svg)](http://godoc.org/github.com/dghubble/oauth1)
 
 <img align="right" src="https://storage.googleapis.com/dghubble/oauth1.png">
 
