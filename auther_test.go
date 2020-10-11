@@ -17,9 +17,11 @@ func TestCommonOAuthParams(t *testing.T) {
 	}{
 		{
 			&auther{
-				&Config{ConsumerKey: "some_consumer_key"},
+				&Config{
+					ConsumerKey: "some_consumer_key",
+					Noncer:      &fixedNoncer{"some_nonce"},
+				},
 				&fixedClock{time.Unix(50037133, 0)},
-				&fixedNoncer{"some_nonce"},
 			},
 			map[string]string{
 				"oauth_consumer_key":     "some_consumer_key",
@@ -31,9 +33,12 @@ func TestCommonOAuthParams(t *testing.T) {
 		},
 		{
 			&auther{
-				&Config{ConsumerKey: "some_consumer_key", Realm: "photos"},
+				&Config{
+					ConsumerKey: "some_consumer_key",
+					Realm:       "photos",
+					Noncer:      &fixedNoncer{"some_nonce"},
+				},
 				&fixedClock{time.Unix(50037133, 0)},
-				&fixedNoncer{"some_nonce"},
 			},
 			map[string]string{
 				"oauth_consumer_key":     "some_consumer_key",
@@ -52,7 +57,7 @@ func TestCommonOAuthParams(t *testing.T) {
 }
 
 func TestNonce(t *testing.T) {
-	auther := &auther{}
+	auther := newAuther(nil)
 	nonce := auther.nonce()
 	// assert that 32 bytes (256 bites) become 44 bytes since a base64 byte
 	// zeros the 2 high bits. 3 bytes convert to 4 base64 bytes, 40 base64 bytes
@@ -62,7 +67,7 @@ func TestNonce(t *testing.T) {
 }
 
 func TestEpoch(t *testing.T) {
-	a := &auther{}
+	a := newAuther(nil)
 	// assert that a real time is used by default
 	assert.InEpsilon(t, time.Now().Unix(), a.epoch(), 1)
 	// assert that the fixed clock can be used for testing

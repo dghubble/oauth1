@@ -32,11 +32,11 @@ func TestTransport(t *testing.T) {
 	config := &Config{
 		ConsumerKey:    expectedConsumerKey,
 		ConsumerSecret: "consumer_secret",
+		Noncer:         &fixedNoncer{expectedNonce},
 	}
 	auther := &auther{
 		config: config,
 		clock:  &fixedClock{time.Unix(123456789, 0)},
-		noncer: &fixedNoncer{expectedNonce},
 	}
 	tr := &Transport{
 		source: StaticTokenSource(NewToken(expectedToken, "some_secret")),
@@ -69,9 +69,8 @@ func TestTransport_nilSource(t *testing.T) {
 	tr := &Transport{
 		source: nil,
 		auther: &auther{
-			config: &Config{},
+			config: &Config{Noncer: &fixedNoncer{"any_nonce"}},
 			clock:  &fixedClock{time.Unix(123456789, 0)},
-			noncer: &fixedNoncer{"any_nonce"},
 		},
 	}
 	client := &http.Client{Transport: tr}
@@ -86,9 +85,8 @@ func TestTransport_emptySource(t *testing.T) {
 	tr := &Transport{
 		source: StaticTokenSource(nil),
 		auther: &auther{
-			config: &Config{},
+			config: &Config{Noncer: &fixedNoncer{"any_nonce"}},
 			clock:  &fixedClock{time.Unix(123456789, 0)},
-			noncer: &fixedNoncer{"any_nonce"},
 		},
 	}
 	client := &http.Client{Transport: tr}
