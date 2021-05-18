@@ -31,6 +31,8 @@ type Config struct {
 	Signer Signer
 	// Noncer creates request nonces (defaults to DefaultNoncer)
 	Noncer Noncer
+	// HTTPClient overrides the choice of http.DefaultClient for RequestToken and AccessToken
+	HTTPClient *http.Client
 }
 
 // NewConfig returns a new Config with the given consumer key and secret.
@@ -62,8 +64,8 @@ func NewClient(ctx context.Context, config *Config, token *Token) *http.Client {
 // oauth_callback_confirmed is true. Returns the request token and secret
 // (temporary credentials).
 // See RFC 5849 2.1 Temporary Credentials.
-func (c *Config) RequestToken(ctx context.Context) (requestToken, requestSecret string, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.Endpoint.RequestTokenURL, nil)
+func (c *Config) RequestToken() (requestToken, requestSecret string, err error) {
+	req, err := http.NewRequest("POST", c.Endpoint.RequestTokenURL, nil)
 	if err != nil {
 		return "", "", err
 	}
@@ -71,7 +73,7 @@ func (c *Config) RequestToken(ctx context.Context) (requestToken, requestSecret 
 	if err != nil {
 		return "", "", err
 	}
-	resp, err := contextClient(ctx).Do(req)
+	resp, err := c.httpClient().Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -139,8 +141,8 @@ func ParseAuthorizationCallback(req *http.Request) (requestToken, verifier strin
 // Endpoint AccessTokenURL. Returns the access token and secret (token
 // credentials).
 // See RFC 5849 2.3 Token Credentials.
-func (c *Config) AccessToken(ctx context.Context, requestToken, requestSecret, verifier string) (accessToken, accessSecret string, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.Endpoint.AccessTokenURL, nil)
+func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (accessToken, accessSecret string, err error) {
+	req, err := http.NewRequest("POST", c.Endpoint.AccessTokenURL, nil)
 	if err != nil {
 		return "", "", err
 	}
@@ -148,7 +150,7 @@ func (c *Config) AccessToken(ctx context.Context, requestToken, requestSecret, v
 	if err != nil {
 		return "", "", err
 	}
-	resp, err := contextClient(ctx).Do(req)
+	resp, err := c.httpClient().Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -172,4 +174,11 @@ func (c *Config) AccessToken(ctx context.Context, requestToken, requestSecret, v
 		return "", "", errors.New("oauth1: Response missing oauth_token or oauth_token_secret")
 	}
 	return accessToken, accessSecret, nil
+}
+
+func (c *Config) httpClient() *http.Client {
+	if c.HTTPClient != nil {
+		return c.HTTPClient
+	}
+	return http.DefaultClient
 }

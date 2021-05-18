@@ -21,12 +21,3 @@ func contextTransport(ctx context.Context) http.RoundTripper {
 	}
 	return nil
 }
-
-func contextClient(ctx context.Context) *http.Client {
-	if ctx != nil {
-		if client, ok := ctx.Value(HTTPClient).(*http.Client); ok {
-			return client
-		}
-	}
-	return http.DefaultClient
-}
