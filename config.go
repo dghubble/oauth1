@@ -31,6 +31,8 @@ type Config struct {
 	Signer Signer
 	// Noncer creates request nonces (defaults to DefaultNoncer)
 	Noncer Noncer
+	// HTTPClient overrides the choice of http.DefaultClient for RequestToken and AccessToken
+	HTTPClient *http.Client
 }
 
 // NewConfig returns a new Config with the given consumer key and secret.
@@ -71,7 +73,7 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	if err != nil {
 		return "", "", err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.httpClient().Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -148,7 +150,7 @@ func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (acce
 	if err != nil {
 		return "", "", err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.httpClient().Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -172,4 +174,11 @@ func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (acce
 		return "", "", errors.New("oauth1: Response missing oauth_token or oauth_token_secret")
 	}
 	return accessToken, accessSecret, nil
+}
+
+func (c *Config) httpClient() *http.Client {
+	if c.HTTPClient != nil {
+		return c.HTTPClient
+	}
+	return http.DefaultClient
 }
