@@ -4,6 +4,8 @@ Notable changes between releases.
 
 ## Latest
 
+* Show body when `RequestToken` or `AccessToken` requests return an invalid status code ([#54](https://github.com/dghubble/oauth1/pull/54))
+
 ## v0.7.0
 
 * Add an `HMAC256Signer` ([#40](https://github.com/dghubble/oauth1/pull/40))
