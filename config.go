@@ -155,7 +155,7 @@ func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (acce
 		return "", "", err
 	}
 	// when err is nil, resp contains a non-nil resp.Body which must be closed
-	defer resp.Body.Close(
+	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", "", fmt.Errorf("oauth1: Unable to read body of response with status %d: %w", resp.StatusCode, err)
