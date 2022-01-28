@@ -63,7 +63,8 @@ func newRequestTokenServer(t *testing.T, data url.Values) *httptest.Server {
 		assert.Equal(t, "POST", req.Method)
 		assert.NotEmpty(t, req.Header.Get("Authorization"))
 		w.Header().Set(contentType, formContentType)
-		w.Write([]byte(data.Encode()))
+		// Add a newline to ensure parsing works for servers that return extra whitespace
+		w.Write([]byte(data.Encode() + "\n"))
 	})
 }
 
@@ -91,7 +92,7 @@ func newUnparseableBodyServer() *httptest.Server {
 }
 
 func TestConfigRequestToken(t *testing.T) {
-	expectedToken := "reqest_token"
+	expectedToken := "request_token"
 	expectedSecret := "request_secret"
 	data := url.Values{}
 	data.Add("oauth_token", expectedToken)
@@ -124,7 +125,7 @@ func TestConfigRequestToken_InvalidRequestTokenURL(t *testing.T) {
 }
 
 func TestConfigRequestToken_CallbackNotConfirmed(t *testing.T) {
-	const expectedToken = "reqest_token"
+	const expectedToken = "request_token"
 	const expectedSecret = "request_secret"
 	data := url.Values{}
 	data.Add("oauth_token", expectedToken)
