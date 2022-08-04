@@ -11,6 +11,13 @@ import (
 	"time"
 )
 
+const (
+	XForwardedProto = "X-Forwarded-Proto"
+	ForwardedHeader = "Forwarded"
+
+	ForwardedHeaderProtoField = "proto"
+)
+
 // Verifier verifies a OAuth1 signature based on base string.
 type Verifier interface {
 	Verify(baseString, actualSignature string) error
@@ -75,31 +82,6 @@ func (v *VerifierManager) Verify(req *http.Request) error {
 		return fmt.Errorf("oauth1: error verifying signature: %w", err)
 	}
 	return nil
-}
-
-// makeURLAbs tries to make sure request url has scheme & host.
-// If missing host, makeURLAbs gets it from request.Host.
-// If missing scheme, makeURLAbs tries to get it from header.
-// Currently makeURLAbs only utilizes in Forwarded & X-Forwarded-Proto.
-func (v *VerifierManager) makeURLAbs(req *http.Request) {
-	if req.URL.IsAbs() {
-		return
-	}
-	// we need scheme & host
-	req.URL.Host = req.Host
-
-	raw := req.Header.Get(ForwardedHeader) // standard
-	scheme := parseForwardedHeader(raw)[ForwardedHeaderProtoField]
-	if len(scheme) != 0 {
-		req.URL.Scheme = scheme
-		return
-	}
-	scheme = req.Header.Get(XForwardedProto) // de-facto standard
-	if len(scheme) != 0 {
-		req.URL.Scheme = scheme
-		return
-	}
-	req.URL.Scheme = v.defaultScheme
 }
 
 // checkTimestamp only supports timestamp that is expressed in the number of seconds since January 1, 1970 00:00:00 GMT.
@@ -257,12 +239,30 @@ func collectRequestParameters(req *http.Request) (map[string]string, string, err
 	return params, signatureBase64, nil
 }
 
-const (
-	XForwardedProto = "X-Forwarded-Proto"
-	ForwardedHeader = "Forwarded"
+// makeURLAbs tries to make sure request url has scheme & host.
+// If missing host, makeURLAbs gets it from request.Host.
+// If missing scheme, makeURLAbs tries to get it from header.
+// Currently makeURLAbs only utilizes in Forwarded & X-Forwarded-Proto.
+func (v *VerifierManager) makeURLAbs(req *http.Request) {
+	if req.URL.IsAbs() {
+		return
+	}
+	// we need scheme & host
+	req.URL.Host = req.Host
 
-	ForwardedHeaderProtoField = "proto"
-)
+	raw := req.Header.Get(ForwardedHeader) // standard
+	scheme := parseForwardedHeader(raw)[ForwardedHeaderProtoField]
+	if len(scheme) != 0 {
+		req.URL.Scheme = scheme
+		return
+	}
+	scheme = req.Header.Get(XForwardedProto) // de-facto standard
+	if len(scheme) != 0 {
+		req.URL.Scheme = scheme
+		return
+	}
+	req.URL.Scheme = v.defaultScheme
+}
 
 // parseForwardedHeader parses Forwarded header.
 // parseForwardedHeader does NOT return nil.
