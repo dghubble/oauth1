@@ -163,6 +163,9 @@ func NewHMACVerifier(c *Config, tokenSecret string) *HMACVerifier {
 
 // Verify verifies the signature based on base string using hmac + hash selected in initialization.
 func (v *HMACVerifier) Verify(baseString, actualSignature string) error {
+	// https://datatracker.ietf.org/doc/html/rfc5849#section-3.4.2
+	// signature is base64 encoded
+	// Be careful, Signer.Sign() returns base64-encoded signature
 	expectedSignature, err := v.signer.Sign(v.tokenSecret, baseString)
 	if err != nil {
 		return fmt.Errorf("oauth1: error signing request for validating signature: %w", err)
