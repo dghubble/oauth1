@@ -48,26 +48,26 @@ func PercentDecode(input string) (string, error) {
 	return t.String(), nil
 }
 
-// ishex is copied from url
+// ishex is copied from url package
 func ishex(c byte) bool {
 	switch {
 	case '0' <= c && c <= '9':
 		return true
-	case 'a' <= c && c <= 'f':
-		return true
+	// https://datatracker.ietf.org/doc/html/rfc5849#section-3.6
+	// The two hexadecimal characters used to represent encoded	characters MUST be uppercase.
 	case 'A' <= c && c <= 'F':
 		return true
 	}
 	return false
 }
 
-// unhex is copied from url
+// unhex is copied from url package
 func unhex(c byte) byte {
 	switch {
 	case '0' <= c && c <= '9':
 		return c - '0'
-	case 'a' <= c && c <= 'f':
-		return c - 'a' + 10
+	// https://datatracker.ietf.org/doc/html/rfc5849#section-3.6
+	// The two hexadecimal characters used to represent encoded	characters MUST be uppercase.
 	case 'A' <= c && c <= 'F':
 		return c - 'A' + 10
 	}
