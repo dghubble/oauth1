@@ -3,7 +3,6 @@ module github.com/itsrever/oauth1
 go 1.19
 
 require (
-	github.com/dghubble/oauth1 v0.7.2
 	github.com/stretchr/testify v1.8.2
 )
 

@@ -6,30 +6,30 @@ Notable changes between releases.
 
 ## v0.7.2
 
-* Update minimum Go version from v1.17 to v1.18 ([#66](https://github.com/dghubble/oauth1/pull/66))
+* Update minimum Go version from v1.17 to v1.18 ([#66](https://github.com/itsrever/oauth1/pull/66))
 
 ## v0.7.1
 
-* Show body when `RequestToken` or `AccessToken` requests return an invalid status code ([#54](https://github.com/dghubble/oauth1/pull/54))
+* Show body when `RequestToken` or `AccessToken` requests return an invalid status code ([#54](https://github.com/itsrever/oauth1/pull/54))
 
 ## v0.7.0
 
-* Add an `HMAC256Signer` ([#40](https://github.com/dghubble/oauth1/pull/40))
-* Add discogs `Endpoint` ([#39](https://github.com/dghubble/oauth1/pull/39))
-* Allow custom `Noncer` for unusual OAuth1 providers ([#45](https://github.com/dghubble/oauth1/pull/45)
-* Change tumblr `Endpoint` URLs to https ([#37](https://github.com/dghubble/oauth1/pull/37))
+* Add an `HMAC256Signer` ([#40](https://github.com/itsrever/oauth1/pull/40))
+* Add discogs `Endpoint` ([#39](https://github.com/itsrever/oauth1/pull/39))
+* Allow custom `Noncer` for unusual OAuth1 providers ([#45](https://github.com/itsrever/oauth1/pull/45)
+* Change tumblr `Endpoint` URLs to https ([#37](https://github.com/itsrever/oauth1/pull/37))
 
 ## v0.6.0
 
-* Add Go module support ([#32](https://github.com/dghubble/oauth1/pull/32))
+* Add Go module support ([#32](https://github.com/itsrever/oauth1/pull/32))
 
 ## v0.5.0
 
-* Use standard library `context` ([c0a405](https://github.com/dghubble/oauth1/commit/c0a405baf29f5ed2616bc1ef6b778532c960aa5b))
+* Use standard library `context` ([c0a405](https://github.com/itsrever/oauth1/commit/c0a405baf29f5ed2616bc1ef6b778532c960aa5b))
   * Requires Go 1.7+
-* Add `xing` package with a provider `Endpoint` ([#10](https://github.com/dghubble/oauth1/pull/10))
-* Add status code checks so server errors are clearer ([09fded](https://github.com/dghubble/oauth1/commit/b0d5c93a5292844f3fd568893ce4e12bdcdb79ae))
-* Move confirmed check after token check so errors are clearer ([#8](https://github.com/dghubble/oauth1/pull/8))
+* Add `xing` package with a provider `Endpoint` ([#10](https://github.com/itsrever/oauth1/pull/10))
+* Add status code checks so server errors are clearer ([09fded](https://github.com/itsrever/oauth1/commit/b0d5c93a5292844f3fd568893ce4e12bdcdb79ae))
+* Move confirmed check after token check so errors are clearer ([#8](https://github.com/itsrever/oauth1/pull/8))
 
 ## v0.4.0
 

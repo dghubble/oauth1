@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	oauthTokenSecretParam = "oauth_token_secret"
+	oauthTokenSecretParam       = "oauth_token_secret"
+	oauthCallbackConfirmedParam = "oauth_callback_confirmed"
 )
 
 // Config represents an OAuth1 consumer's (client's) key and secret, the

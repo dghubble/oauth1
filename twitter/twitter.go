@@ -2,7 +2,7 @@
 package twitter
 
 import (
-	"github.com/dghubble/oauth1"
+	"github.com/itsrever/oauth1"
 )
 
 // AuthenticateEndpoint is Twitter's OAuth 1 endpoint which uses the

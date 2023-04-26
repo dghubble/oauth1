@@ -2,7 +2,7 @@
 package tumblr
 
 import (
-	"github.com/dghubble/oauth1"
+	"github.com/itsrever/oauth1"
 )
 
 // Endpoint is Tumblr's OAuth 1a endpoint.

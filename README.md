@@ -1,6 +1,6 @@
 # OAuth1
-[![GoDoc](https://pkg.go.dev/badge/github.com/dghubble/oauth1.svg)](https://pkg.go.dev/github.com/dghubble/oauth1)
-[![Workflow](https://github.com/dghubble/oauth1/actions/workflows/test.yaml/badge.svg)](https://github.com/dghubble/oauth1/actions/workflows/test.yaml?query=branch%3Amain)
+[![GoDoc](https://pkg.go.dev/badge/github.com/itsrever/oauth1.svg)](https://pkg.go.dev/github.com/itsrever/oauth1)
+[![Workflow](https://github.com/itsrever/oauth1/actions/workflows/test.yaml/badge.svg)](https://github.com/itsrever/oauth1/actions/workflows/test.yaml?query=branch%3Amain)
 [![Sponsors](https://img.shields.io/github/sponsors/dghubble?logo=github)](https://github.com/sponsors/dghubble)
 [![Mastodon](https://img.shields.io/badge/follow-news-6364ff?logo=mastodon)](https://fosstodon.org/@typhoon)
 
@@ -13,12 +13,12 @@ Package `oauth1` provides a Go implementation of the [OAuth 1 spec](https://tool
 ## Install
 
 ```
-go get github.com/dghubble/oauth1
+go get github.com/itsrever/oauth1
 ```
 
 ## Docs
 
-Read [GoDoc](https://godoc.org/github.com/dghubble/oauth1)
+Read [GoDoc](https://godoc.org/github.com/itsrever/oauth1)
 
 ## Usage
 
@@ -38,8 +38,8 @@ Perform the OAuth 1 authorization flow to ask a user to grant an application acc
 
 ```go
 import (
-    "github.com/dghubble/oauth1"
-    "github.com/dghubble/oauth1/twitter"
+    "github.com/itsrever/oauth1"
+    "github.com/itsrever/oauth1/twitter"
 )
 ...
 
@@ -89,7 +89,7 @@ Use an access `Token` to make authorized requests on behalf of a user.
 
 ```go
 import (
-    "github.com/dghubble/oauth1"
+    "github.com/itsrever/oauth1"
 )
 
 func main() {
