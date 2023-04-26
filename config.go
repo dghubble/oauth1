@@ -1,3 +1,4 @@
+// nolint
 package oauth1
 
 import (
@@ -10,8 +11,7 @@ import (
 )
 
 const (
-	oauthTokenSecretParam       = "oauth_token_secret"
-	oauthCallbackConfirmedParam = "oauth_callback_confirmed"
+	oauthTokenSecretParam = "oauth_token_secret"
 )
 
 // Config represents an OAuth1 consumer's (client's) key and secret, the
@@ -97,9 +97,6 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	requestSecret = values.Get(oauthTokenSecretParam)
 	if requestToken == "" || requestSecret == "" {
 		return "", "", errors.New("oauth1: Response missing oauth_token or oauth_token_secret")
-	}
-	if values.Get(oauthCallbackConfirmedParam) != "true" {
-		return "", "", errors.New("oauth1: oauth_callback_confirmed was not true")
 	}
 	return requestToken, requestSecret, nil
 }

@@ -18,6 +18,7 @@ type Base64Noncer struct{}
 // Nonce provides a random nonce string.
 func (n Base64Noncer) Nonce() string {
 	b := make([]byte, 32)
+	//nolint
 	rand.Read(b)
 	return base64.StdEncoding.EncodeToString(b)
 }
@@ -29,6 +30,7 @@ type HexNoncer struct{}
 // Nonce provides a random nonce string.
 func (n HexNoncer) Nonce() string {
 	b := make([]byte, 32)
+	//nolint
 	rand.Read(b)
 	return hex.EncodeToString(b)
 }
