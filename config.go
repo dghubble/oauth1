@@ -89,6 +89,8 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 		return "", "", fmt.Errorf("oauth1: invalid status %d: %s", resp.StatusCode, body)
 	}
 
+	fmt.Println("Request Token Body: " + string(body))
+
 	// ParseQuery to decode URL-encoded application/x-www-form-urlencoded body
 	values, err := url.ParseQuery(string(body))
 	if err != nil {
@@ -164,6 +166,8 @@ func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (acce
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return "", "", fmt.Errorf("oauth1: invalid status %d: %s", resp.StatusCode, body)
 	}
+
+	fmt.Println("Access Token Body: " + string(body))
 
 	// ParseQuery to decode URL-encoded application/x-www-form-urlencoded body
 	values, err := url.ParseQuery(string(body))
