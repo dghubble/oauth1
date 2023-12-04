@@ -46,7 +46,7 @@ func GetAccessToken(consumerKey, consumerSecret, oauthVerifier, baseURL string) 
 	// Example API request
 	resp, err := httpClient.Get(baseURL + "/rest/V1/store/storeConfigs")
 	if err == nil {
-		prettyPrintHTTPResponse(resp)
+		prettyPrintHTTPResponse("oauth1 sample http call to store config: ", resp)
 	} else {
 		fmt.Errorf("Error making API request: %v", err.Error())
 	}
@@ -55,7 +55,19 @@ func GetAccessToken(consumerKey, consumerSecret, oauthVerifier, baseURL string) 
 	return accessToken, accessSecret, nil
 }
 
-func prettyPrintHTTPResponse(response *http.Response) {
+func prettyPrintHTTPRequest(prefix string, request *http.Request) {
+	// Dump the request as a byte slice
+	dump, err := httputil.DumpRequest(request, true)
+	if err != nil {
+		fmt.Println("Failed to dump request:", err)
+		return
+	}
+
+	// Print the formatted request
+	fmt.Println(prefix + string(dump))
+}
+
+func prettyPrintHTTPResponse(prefix string, response *http.Response) {
 	// Dump the response as a byte slice
 	dump, err := httputil.DumpResponse(response, true)
 	if err != nil {
@@ -64,5 +76,5 @@ func prettyPrintHTTPResponse(response *http.Response) {
 	}
 
 	// Print the formatted response
-	fmt.Println(string(dump))
+	fmt.Println(prefix + string(dump))
 }
