@@ -73,6 +73,7 @@ func (a *auther) setRequestTokenAuthHeader(req *http.Request) error {
 		oauthParams[realmParam] = a.config.Realm
 	}
 	req.Header.Set(authorizationHeaderParam, authHeaderValue(oauthParams))
+	req.Header.Set("User-Agent", "REVER-Go-oauth-client/1.0")
 	return nil
 }
 

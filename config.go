@@ -70,6 +70,7 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	if err != nil {
 		return "", "", err
 	}
+	req.Header.Set("User-Agent", "REVER-Go-oauth-client/1.0")
 	prettyPrintHTTPRequest("Request Token Request: ", req)
 	err = newAuther(c).setRequestTokenAuthHeader(req)
 	if err != nil {
@@ -147,6 +148,7 @@ func ParseAuthorizationCallback(req *http.Request) (requestToken, verifier strin
 // See RFC 5849 2.3 Token Credentials.
 func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (accessToken, accessSecret string, err error) {
 	req, err := http.NewRequest("POST", c.Endpoint.AccessTokenURL, nil)
+	req.Header.Set("User-Agent", "REVER-Go-oauth-client/1.0")
 	if err != nil {
 		return "", "", err
 	}
