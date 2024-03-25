@@ -249,6 +249,7 @@ func TestBaseURI(t *testing.T) {
 	reqB, err := http.NewRequest("POST", "https://www.example.net:8080/?q=1", nil)
 	assert.Nil(t, err)
 	reqC, err := http.NewRequest("POST", "https://example.com:443", nil)
+	assert.Nil(t, err)
 	cases := []struct {
 		req     *http.Request
 		baseURI string
