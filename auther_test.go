@@ -12,11 +12,11 @@ import (
 
 func TestCommonOAuthParams(t *testing.T) {
 	cases := []struct {
-		auther         *auther
+		Auther         *Auther
 		expectedParams map[string]string
 	}{
 		{
-			&auther{
+			&Auther{
 				&Config{
 					ConsumerKey: "some_consumer_key",
 					Noncer:      &fixedNoncer{"some_nonce"},
@@ -32,7 +32,7 @@ func TestCommonOAuthParams(t *testing.T) {
 			},
 		},
 		{
-			&auther{
+			&Auther{
 				&Config{
 					ConsumerKey: "some_consumer_key",
 					Realm:       "photos",
@@ -52,13 +52,13 @@ func TestCommonOAuthParams(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		assert.Equal(t, c.expectedParams, c.auther.commonOAuthParams())
+		assert.Equal(t, c.expectedParams, c.Auther.commonOAuthParams())
 	}
 }
 
 func TestNonce(t *testing.T) {
-	auther := newAuther(nil)
-	nonce := auther.nonce()
+	Auther := NewAuther(nil)
+	nonce := Auther.nonce()
 	// assert that 32 bytes (256 bites) become 44 bytes since a base64 byte
 	// zeros the 2 high bits. 3 bytes convert to 4 base64 bytes, 40 base64 bytes
 	// represent the first 30 of 32 bytes, = padding adds another 4 byte group.
@@ -67,17 +67,17 @@ func TestNonce(t *testing.T) {
 }
 
 func TestEpoch(t *testing.T) {
-	a := newAuther(nil)
+	a := NewAuther(nil)
 	// assert that a real time is used by default
 	assert.InEpsilon(t, time.Now().Unix(), a.epoch(), 1)
 	// assert that the fixed clock can be used for testing
-	a = &auther{clock: &fixedClock{time.Unix(50037133, 0)}}
+	a = &Auther{Clock: &fixedClock{time.Unix(50037133, 0)}}
 	assert.Equal(t, int64(50037133), a.epoch())
 }
 
 func TestSigner_Default(t *testing.T) {
 	config := &Config{ConsumerSecret: "consumer_secret"}
-	a := newAuther(config)
+	a := NewAuther(config)
 	// echo -n "hello world" | openssl dgst -sha1 -hmac "consumer_secret&token_secret" -binary | base64
 	expectedSignature := "BE0uILOruKfSXd4UzYlLJDfOq08="
 	// assert that the default signer produces the expected HMAC-SHA1 digest
@@ -92,7 +92,7 @@ func TestSigner_SHA256(t *testing.T) {
 	config := &Config{
 		Signer: &HMAC256Signer{ConsumerSecret: "consumer_secret"},
 	}
-	a := newAuther(config)
+	a := NewAuther(config)
 	// echo -n "hello world" | openssl dgst -sha256 -hmac "consumer_secret&token_secret" -binary | base64
 	expectedSignature := "pW9drXUyErU8DASWbsP2I3XZbju37AW+VzcGdYSeMo8="
 	// assert that the signer produces the expected HMAC-SHA256 digest
@@ -118,7 +118,7 @@ func TestSigner_Custom(t *testing.T) {
 		ConsumerSecret: "consumer_secret",
 		Signer:         &identitySigner{},
 	}
-	a := newAuther(config)
+	a := NewAuther(config)
 	// assert that the custom signer is used
 	method := a.signer().Name()
 	digest, err := a.signer().Sign("secret", "hello world")
