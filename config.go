@@ -2,6 +2,7 @@ package oauth1
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -117,6 +118,40 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	return requestToken, requestSecret, nil
 }
 
+// RequestTokenJSON is similar to RequestToken, but assumes RequestTokenURL returns
+// json formatted response, avoiding url.ParseQuery which fails for tokens with semicolon.
+// The response body form is validated to ensure
+// oauth_callback_confirmed is true. Returns the request token and secret
+// (temporary credentials).
+func (c *Config) RequestTokenJSON() (requestToken, requestSecret string, err error) {
+	type requestResponse struct {
+		Oauth_token              string
+		Oauth_token_secret       string
+		Oauth_callback_confirmed string
+	}
+	body, err := c.RequestTokenString()
+	if err != nil {
+		return "", "", err
+	}
+
+	// Parse JSON
+	var values requestResponse
+	err = json.Unmarshal([]byte(body), &values)
+	if err != nil {
+		return "", "", err
+	}
+	fmt.Printf("values = %v\n", values)
+	requestToken = values.Oauth_token
+	requestSecret = values.Oauth_token_secret
+	if requestToken == "" || requestSecret == "" {
+		return "", "", errors.New("oauth1: Response missing oauth_token or oauth_token_secret")
+	}
+	if values.Oauth_callback_confirmed != "true" {
+		return "", "", errors.New("oauth1: oauth_callback_confirmed was not true")
+	}
+	return requestToken, requestSecret, nil
+}
+
 // AuthorizationURL accepts a request token and returns the *url.URL to the
 // Endpoint's authorization page that asks the user (resource owner) for to
 // authorize the consumer to act on his/her/its behalf.
@@ -199,6 +234,33 @@ func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (acce
 	}
 	accessToken = values.Get(oauthTokenParam)
 	accessSecret = values.Get(oauthTokenSecretParam)
+	if accessToken == "" || accessSecret == "" {
+		return "", "", errors.New("oauth1: Response missing oauth_token or oauth_token_secret")
+	}
+	return accessToken, accessSecret, nil
+}
+
+// AccessTokenJSON is similar to AccessToken, but assumes AccessTokenURL returns
+// json formatted response, avoding url.ParseQuery which fails for tokens with semicolon.
+func (c *Config) AccessTokenJSON(requestToken, requestSecret, verifier string) (accessToken, accessSecret string, err error) {
+	type accessRequestResponse struct {
+		Oauth_token        string
+		Oauth_token_secret string
+		//Scope              string
+	}
+
+	body, err := c.AccessTokenString(requestToken, requestSecret, verifier)
+
+	fmt.Printf("body: %v\n", string(body))
+
+	// Parse JSON
+	var values accessRequestResponse
+	err = json.Unmarshal([]byte(body), &values)
+	if err != nil {
+		return "", "", err
+	}
+	accessToken = values.Oauth_token
+	accessSecret = values.Oauth_token_secret
 	if accessToken == "" || accessSecret == "" {
 		return "", "", errors.New("oauth1: Response missing oauth_token or oauth_token_secret")
 	}
