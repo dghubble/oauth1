@@ -59,6 +59,37 @@ func NewClient(ctx context.Context, config *Config, token *Token) *http.Client {
 	return &http.Client{Transport: transport}
 }
 
+// RequestTokenString POSTs a
+// request (with oauth_callback in the auth header) to the Endpoint
+// RequestTokenURL. The response is returned raw, without any checks, use
+// c.RequestToken() or c.RequestTokenJSON() to get a parsed response.
+func (c *Config) RequestTokenString() (rawRequestString string, err error) {
+	req, err := http.NewRequest("POST", c.Endpoint.RequestTokenURL, nil)
+	if err != nil {
+		return "", err
+	}
+	err = newAuther(c).setRequestTokenAuthHeader(req)
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.httpClient().Do(req)
+	if err != nil {
+		return "", err
+	}
+	// when err is nil, resp contains a non-nil resp.Body which must be closed
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("oauth1: error reading Body: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return "", fmt.Errorf("oauth1: invalid status %d: %s", resp.StatusCode, body)
+	}
+
+	return strings.TrimSpace(string(body)), nil
+}
+
 // RequestToken obtains a Request token and secret (temporary credential) by
 // POSTing a request (with oauth_callback in the auth header) to the Endpoint
 // RequestTokenURL. The response body form is validated to ensure
@@ -66,31 +97,12 @@ func NewClient(ctx context.Context, config *Config, token *Token) *http.Client {
 // (temporary credentials).
 // See RFC 5849 2.1 Temporary Credentials.
 func (c *Config) RequestToken() (requestToken, requestSecret string, err error) {
-	req, err := http.NewRequest("POST", c.Endpoint.RequestTokenURL, nil)
+	body, err := c.RequestTokenString()
 	if err != nil {
 		return "", "", err
 	}
-	err = newAuther(c).setRequestTokenAuthHeader(req)
-	if err != nil {
-		return "", "", err
-	}
-	resp, err := c.httpClient().Do(req)
-	if err != nil {
-		return "", "", err
-	}
-	// when err is nil, resp contains a non-nil resp.Body which must be closed
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", "", fmt.Errorf("oauth1: error reading Body: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return "", "", fmt.Errorf("oauth1: invalid status %d: %s", resp.StatusCode, body)
-	}
-
 	// ParseQuery to decode URL-encoded application/x-www-form-urlencoded body
-	values, err := url.ParseQuery(strings.TrimSpace(string(body)))
+	values, err := url.ParseQuery(body)
 	if err != nil {
 		return "", "", err
 	}
@@ -139,37 +151,49 @@ func ParseAuthorizationCallback(req *http.Request) (requestToken, verifier strin
 	return requestToken, verifier, nil
 }
 
-// AccessToken obtains an access token (token credential) by POSTing a
+// AccessTokenString POSTs a
 // request (with oauth_token and oauth_verifier in the auth header) to the
-// Endpoint AccessTokenURL. Returns the access token and secret (token
-// credentials).
-// See RFC 5849 2.3 Token Credentials.
-func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (accessToken, accessSecret string, err error) {
+// Endpoint AccessTokenURL. The response is returned raw, without any checks, use
+// c.RequestToken() to get a parsed response.
+func (c *Config) AccessTokenString(requestToken, requestSecret, verifier string) (rawAccessToken string, err error) {
 	req, err := http.NewRequest("POST", c.Endpoint.AccessTokenURL, nil)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	err = newAuther(c).setAccessTokenAuthHeader(req, requestToken, requestSecret, verifier)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	resp, err := c.httpClient().Do(req)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	// when err is nil, resp contains a non-nil resp.Body which must be closed
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", "", fmt.Errorf("oauth1: error reading Body: %v", err)
+		return "", fmt.Errorf("oauth1: error reading Body: %v", err)
 	}
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return "", "", fmt.Errorf("oauth1: invalid status %d: %s", resp.StatusCode, body)
+		return "", fmt.Errorf("oauth1: invalid status %d: %s", resp.StatusCode, body)
 	}
 
+	return string(body), nil
+}
+
+// AccessToken obtains an access token (token credential) by POSTing a
+// request (with oauth_token and oauth_verifier in the auth header) to the
+// Endpoint AccessTokenURL. Returns the access token and secret (token
+// credentials).
+// See RFC 5849 2.3 Token Credentials.
+func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (accessToken, accessSecret string, err error) {
+	body, err := c.AccessTokenString(requestToken, requestSecret, verifier)
+
+	fmt.Printf("body: %v\n", string(body))
+
 	// ParseQuery to decode URL-encoded application/x-www-form-urlencoded body
-	values, err := url.ParseQuery(string(body))
+	values, err := url.ParseQuery(body)
 	if err != nil {
 		return "", "", err
 	}
