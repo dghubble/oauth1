@@ -1,4 +1,4 @@
-module github.com/dghubble/oauth1
+module github.com/cappfm/go-oauth1
 
 go 1.19
 
