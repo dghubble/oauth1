@@ -103,7 +103,7 @@ func main() {
     path := "https://api.twitter.com/1.1/statuses/home_timeline.json?count=2"
     resp, _ := httpClient.Get(path)
     defer resp.Body.Close()
-    body, _ := ioutil.ReadAll(resp.Body)
+    body, _ := io.ReadAll(resp.Body)
     fmt.Printf("Raw Response Body:\n%v\n", string(body))
 }
 ```

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/dghubble/oauth1"
@@ -29,7 +29,7 @@ func main() {
 	path := "https://api.tumblr.com/v2/user/info"
 	resp, _ := httpClient.Get(path)
 	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	fmt.Printf("Raw Response Body:\n%v\n", string(body))
 
 	// note: Tumblr requires OAuth signed requests for particular endpoints,
