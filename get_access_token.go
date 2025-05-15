@@ -19,13 +19,10 @@ func GetAccessToken(consumerKey, consumerSecret, oauthVerifier, baseURL string) 
 
 	token := NewToken("", "") // Empty Token and Secret (to be filled in later)
 
-	// Create an OAuth1 client
-	httpClient := config.Client(NoContext, token)
-
 	// Get request token
 	requestToken, requestSecret, err := config.RequestToken()
 	if err != nil {
-		fmt.Errorf("Error obtaining request token: %v", err)
+		return "", "", fmt.Errorf("error obtaining request token: %v", err)
 	}
 	fmt.Printf("Request Token: %s\n", requestToken)
 	fmt.Printf("Request Token Secret: %s\n", requestSecret)
@@ -33,7 +30,7 @@ func GetAccessToken(consumerKey, consumerSecret, oauthVerifier, baseURL string) 
 	// Exchange request token and OAuth verifier for an access token
 	accessToken, accessSecret, err := config.AccessToken(requestToken, requestSecret, oauthVerifier)
 	if err != nil {
-		fmt.Errorf("Error obtaining access token: %v", err.Error())
+		return "", "", fmt.Errorf("error obtaining access token: %v", err.Error())
 	}
 	fmt.Printf("Access Token: %s\n", accessToken)
 	fmt.Printf("Access Token Secret: %s\n", accessSecret)
@@ -41,14 +38,14 @@ func GetAccessToken(consumerKey, consumerSecret, oauthVerifier, baseURL string) 
 	// Use the access token to make authorized API requests
 	token.Token = accessToken
 	token.TokenSecret = accessSecret
-	httpClient = config.Client(NoContext, token)
+	httpClient := config.Client(NoContext, token)
 
 	// Example API request
 	resp, err := httpClient.Get(baseURL + "/rest/V1/store/storeConfigs")
 	if err == nil {
 		prettyPrintHTTPResponse("oauth1 sample http call to store config: ", resp)
 	} else {
-		fmt.Errorf("Error making API request: %v", err.Error())
+		return "", "", fmt.Errorf("error making API request: %v", err.Error())
 	}
 	defer resp.Body.Close()
 
