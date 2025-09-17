@@ -3,7 +3,7 @@ package oauth1
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"sort"
@@ -207,7 +207,7 @@ func collectParameters(req *http.Request, oauthParams map[string]string) (map[st
 	}
 	if req.Body != nil && req.Header.Get(contentType) == formContentType {
 		// reads data to a []byte, draining req.Body
-		b, err := ioutil.ReadAll(req.Body)
+		b, err := io.ReadAll(req.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -220,7 +220,7 @@ func collectParameters(req *http.Request, oauthParams map[string]string) (map[st
 			params[key] = value[0]
 		}
 		// reinitialize Body with ReadCloser over the []byte
-		req.Body = ioutil.NopCloser(bytes.NewReader(b))
+		req.Body = io.NopCloser(bytes.NewReader(b))
 	}
 	for key, value := range oauthParams {
 		// according to 3.4.1.3.1. the realm parameter is excluded

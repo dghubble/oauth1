@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -65,8 +65,8 @@ func NewClient(ctx context.Context, config *Config, token *Token) *http.Client {
 // oauth_callback_confirmed is true. Returns the request token and secret
 // (temporary credentials).
 // See RFC 5849 2.1 Temporary Credentials.
-func (c *Config) RequestToken() (requestToken, requestSecret string, err error) {
-	req, err := http.NewRequest("POST", c.Endpoint.RequestTokenURL, nil)
+func (c *Config) RequestToken(ctx context.Context) (requestToken, requestSecret string, err error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", c.Endpoint.RequestTokenURL, nil)
 	if err != nil {
 		return "", "", err
 	}
@@ -81,7 +81,7 @@ func (c *Config) RequestToken() (requestToken, requestSecret string, err error) 
 	// when err is nil, resp contains a non-nil resp.Body which must be closed
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", "", fmt.Errorf("oauth1: error reading Body: %v", err)
 	}
@@ -144,8 +144,8 @@ func ParseAuthorizationCallback(req *http.Request) (requestToken, verifier strin
 // Endpoint AccessTokenURL. Returns the access token and secret (token
 // credentials).
 // See RFC 5849 2.3 Token Credentials.
-func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (accessToken, accessSecret string, err error) {
-	req, err := http.NewRequest("POST", c.Endpoint.AccessTokenURL, nil)
+func (c *Config) AccessToken(ctx context.Context, requestToken, requestSecret, verifier string) (accessToken, accessSecret string, err error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", c.Endpoint.AccessTokenURL, nil)
 	if err != nil {
 		return "", "", err
 	}
@@ -160,7 +160,7 @@ func (c *Config) AccessToken(requestToken, requestSecret, verifier string) (acce
 	// when err is nil, resp contains a non-nil resp.Body which must be closed
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", "", fmt.Errorf("oauth1: error reading Body: %v", err)
 	}
