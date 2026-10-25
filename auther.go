@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"net/url"
 	"sort"
@@ -205,7 +206,7 @@ func collectParameters(req *http.Request, oauthParams map[string]string) (map[st
 		// most backends do not accept duplicate query keys
 		params[key] = value[0]
 	}
-	if req.Body != nil && req.Header.Get(contentType) == formContentType {
+	if req.Body != nil && isFormContentType(req.Header.Get(contentType)) {
 		// reads data to a []byte, draining req.Body
 		b, err := ioutil.ReadAll(req.Body)
 		if err != nil {
@@ -229,6 +230,14 @@ func collectParameters(req *http.Request, oauthParams map[string]string) (map[st
 		}
 	}
 	return params, nil
+}
+
+// isFormContentType returns true if the Content-Type header value has the
+// application/x-www-form-urlencoded media type, ignoring case and any media
+// type parameters (e.g. charset).
+func isFormContentType(value string) bool {
+	mediaType, _, err := mime.ParseMediaType(value)
+	return err == nil && mediaType == formContentType
 }
 
 // signatureBase combines the uppercase request method, percent encoded base

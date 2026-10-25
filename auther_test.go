@@ -223,6 +223,31 @@ func TestCollectParameters(t *testing.T) {
 	// http://golang.org/src/net/http/request.go#L837
 }
 
+func TestCollectParameters_FormContentTypeWithParams(t *testing.T) {
+	cases := []string{
+		"application/x-www-form-urlencoded; charset=UTF-8",
+		"application/x-www-form-urlencoded;charset=utf-8",
+		"Application/X-WWW-Form-URLEncoded",
+	}
+	for _, ct := range cases {
+		req, err := http.NewRequest("POST", "/request", strings.NewReader("status=hello%20world"))
+		assert.Nil(t, err)
+		req.Header.Set(contentType, ct)
+		params, err := collectParameters(req, map[string]string{})
+		assert.Nil(t, err)
+		assert.Equal(t, map[string]string{"status": "hello world"}, params, ct)
+	}
+}
+
+func TestCollectParameters_NonFormContentType(t *testing.T) {
+	req, err := http.NewRequest("POST", "/request", strings.NewReader("status=hello"))
+	assert.Nil(t, err)
+	req.Header.Set(contentType, "application/json")
+	params, err := collectParameters(req, map[string]string{})
+	assert.Nil(t, err)
+	assert.Equal(t, map[string]string{}, params)
+}
+
 func TestSignatureBase(t *testing.T) {
 	reqA, err := http.NewRequest("get", "HTTPS://HELLO.IO?q=test", nil)
 	assert.Nil(t, err)
